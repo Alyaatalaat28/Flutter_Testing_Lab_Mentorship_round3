@@ -157,7 +157,7 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
                                 ),
                               ),
                               Text(
-                                _weatherData!.description,
+                                _weatherData!.description ?? 'No description',
                                 style: const TextStyle(
                                   fontSize: 18,
                                   color: Colors.grey,
