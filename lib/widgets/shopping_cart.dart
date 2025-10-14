@@ -26,17 +26,31 @@ class ShoppingCart extends StatefulWidget {
 class _ShoppingCartState extends State<ShoppingCart> {
   final List<CartItem> _items = [];
 
-  void addItem(String id, String name, double price, {double discount = 0.0}) {
+  void addItem(CartItem cartItem) {
     setState(() {
-      _items.add(
-        CartItem(id: id, name: name, price: price, discount: discount),
-      );
+      final existingIndex = _items.indexWhere((item) => item.id == cartItem.id);
+      //if cartItem isn't found in the list, add it to the list
+      if (existingIndex != -1) {
+        _items[existingIndex].quantity += 1;
+      } else {
+        _items.add(
+          CartItem(
+            id: cartItem.id,
+            name: cartItem.name,
+            price: cartItem.price,
+            quantity: 1,
+            discount: cartItem.discount,
+          ),
+        );
+      }
     });
   }
 
   void removeItem(String id) {
     setState(() {
-      _items.removeWhere((item) => item.id == id);
+      _items.removeWhere((item) {
+        return item.id == id;
+      });
     });
   }
 
@@ -59,58 +73,70 @@ class _ShoppingCartState extends State<ShoppingCart> {
     });
   }
 
-  double get subtotal {
-    double total = 0;
-    for (var item in _items) {
-      total += item.price * item.quantity;
-    }
-    return total;
-  }
-
-  double get totalDiscount {
-    double discount = 0;
-    for (var item in _items) {
-      discount += item.discount * item.quantity;
-    }
-    return discount;
-  }
+  double get subtotal =>
+      _items.fold(0, (sum, item) => sum + item.price * item.quantity);
+  double get totalDiscount => _items.fold(
+    0,
+    (sum, item) => sum + item.price * item.discount * item.quantity,
+  );
 
   double get totalAmount {
-    return subtotal + totalDiscount;
+    return subtotal - totalDiscount;
   }
 
   int get totalItems {
     return _items.fold(0, (sum, item) => sum + item.quantity);
   }
 
+  final List<Map<String, dynamic>> products = [
+    {
+      'label': 'Add iPhone',
+      'item': CartItem(
+        id: '1',
+        name: 'Apple iPhone',
+        price: 999.99,
+        discount: 0.1,
+      ),
+    },
+    {
+      'label': 'Add Galaxy',
+      'item': CartItem(
+        id: '2',
+        name: 'Samsung Galaxy',
+        price: 899.99,
+        discount: 0.15,
+      ),
+    },
+    {
+      'label': 'Add iPad',
+      'item': CartItem(id: '3', name: 'iPad Pro', price: 1099.99),
+    },
+    {
+      'label': 'Add iPhone Again', // نفس المنتج لكن label مختلف
+      'item': CartItem(
+        id: '1',
+        name: 'Apple iPhone',
+        price: 999.99,
+        discount: 0.1,
+      ),
+    },
+  ];
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         Wrap(
           spacing: 8,
-          children: [
-            ElevatedButton(
-              onPressed: () =>
-                  addItem('1', 'Apple iPhone', 999.99, discount: 0.1),
-              child: const Text('Add iPhone'),
-            ),
-            ElevatedButton(
-              onPressed: () =>
-                  addItem('2', 'Samsung Galaxy', 899.99, discount: 0.15),
-              child: const Text('Add Galaxy'),
-            ),
-            ElevatedButton(
-              onPressed: () => addItem('3', 'iPad Pro', 1099.99),
-              child: const Text('Add iPad'),
-            ),
-            ElevatedButton(
-              onPressed: () =>
-                  addItem('1', 'Apple iPhone', 999.99, discount: 0.1),
-              child: const Text('Add iPhone Again'),
-            ),
-          ],
+          children: products
+              .map(
+                (product) => ElevatedButton(
+                  onPressed: () => addItem(product["item"]),
+                  child: Text(product["label"]),
+                ),
+              )
+              .toList(),
         ),
+
         const SizedBox(height: 16),
 
         Container(
