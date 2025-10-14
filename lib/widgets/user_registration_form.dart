@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../utils/validation_helper.dart';
+
 class UserRegistrationForm extends StatefulWidget {
   const UserRegistrationForm({super.key});
 
@@ -17,16 +19,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
   bool _isLoading = false;
   String _message = '';
 
-  bool isValidEmail(String email) {
-    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
-  }
 
-  bool isValidPassword(String password) {
-    if (password.length < 8) return false;
-    bool hasNumber = password.contains(RegExp(r'[0-9]'));
-    bool hasSpecialChar = password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
-    return hasNumber && hasSpecialChar;
-  }
 
   Future<void> _submitForm() async {
     if(!(_formKey.currentState?.validate()??false)) {
@@ -61,14 +54,8 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
                 labelText: 'Full Name',
                 border: OutlineInputBorder(),
               ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your full name';
-                }
-                if (value.length < 2) {
-                  return 'Name must be at least 2 characters';
-                }
-                return null;
+              validator: (name) {
+                return nameValidation(name);
               },
             ),
             const SizedBox(height: 16),
@@ -79,14 +66,8 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
                 border: OutlineInputBorder(),
               ),
               keyboardType: TextInputType.emailAddress,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your email';
-                }
-                if (!isValidEmail(value)) {
-                  return 'Please enter a valid email';
-                }
-                return null;
+              validator: (email) {
+                return emailValidation(email);
               },
             ),
             const SizedBox(height: 16),
@@ -98,14 +79,8 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
                 helperText: 'At least 8 characters with numbers and symbols',
               ),
               obscureText: true,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter a password';
-                }
-                if (!isValidPassword(value)) {
-                  return 'Password is too weak';
-                }
-                return null;
+              validator: (password) {
+                return passwordValidation(password);
               },
             ),
             const SizedBox(height: 16),
@@ -116,14 +91,9 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
                 border: OutlineInputBorder(),
               ),
               obscureText: true,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please confirm your password';
-                }
-                if (value != _passwordController.text) {
-                  return 'Passwords do not match';
-                }
-                return null;
+              validator: (confirmPassword) {
+                return confirmPasswordValidation(
+                    confirmPassword, _passwordController.text);
               },
             ),
             const SizedBox(height: 24),
