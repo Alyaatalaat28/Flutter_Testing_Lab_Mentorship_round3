@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_testing_lab/widgets/validators.dart';
 
 class UserRegistrationForm extends StatefulWidget {
   const UserRegistrationForm({super.key});
@@ -17,10 +18,6 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
   bool _isLoading = false;
   String _message = '';
 
-  bool isValidEmail(String email) {
-    return email.contains('@');
-  }
-
   bool isValidPassword(String password) {
     return true;
   }
@@ -33,10 +30,14 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
 
     // Simulate API call
     await Future.delayed(const Duration(seconds: 2));
-
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = false;
+        _message = 'Registration successful!';
+      });
+    }
     setState(() {
       _isLoading = false;
-      _message = 'Registration successful!';
     });
   }
 
@@ -50,6 +51,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextFormField(
+              key: const Key('nameField'),
               controller: _nameController,
               decoration: const InputDecoration(
                 labelText: 'Full Name',
@@ -67,6 +69,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
             ),
             const SizedBox(height: 16),
             TextFormField(
+              key: const Key('emailField'),
               controller: _emailController,
               decoration: const InputDecoration(
                 labelText: 'Email',
@@ -74,10 +77,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
               ),
               keyboardType: TextInputType.emailAddress,
               validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your email';
-                }
-                if (!isValidEmail(value)) {
+                if (!Validators.isValidEmail(value)) {
                   return 'Please enter a valid email';
                 }
                 return null;
@@ -85,6 +85,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
             ),
             const SizedBox(height: 16),
             TextFormField(
+              key: const Key('passwordField'),
               controller: _passwordController,
               decoration: const InputDecoration(
                 labelText: 'Password',
@@ -96,7 +97,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
                 if (value == null || value.isEmpty) {
                   return 'Please enter a password';
                 }
-                if (!isValidPassword(value)) {
+                if (!Validators.isValidPassword(value)) {
                   return 'Password is too weak';
                 }
                 return null;
@@ -104,6 +105,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
             ),
             const SizedBox(height: 16),
             TextFormField(
+              key: const Key('confirmPasswordField'),
               controller: _confirmPasswordController,
               decoration: const InputDecoration(
                 labelText: 'Confirm Password',
@@ -122,6 +124,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
+              key: const Key('registerButton'),
               onPressed: _isLoading ? null : _submitForm,
               child: _isLoading
                   ? const CircularProgressIndicator()
