@@ -18,14 +18,20 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
   String _message = '';
 
   bool isValidEmail(String email) {
-    return email.contains('@');
+    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
   }
 
   bool isValidPassword(String password) {
-    return true;
+    if (password.length < 8) return false;
+    bool hasNumber = password.contains(RegExp(r'[0-9]'));
+    bool hasSpecialChar = password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
+    return hasNumber && hasSpecialChar;
   }
 
   Future<void> _submitForm() async {
+    if(!(_formKey.currentState?.validate()??false)) {
+      return;
+    }
     setState(() {
       _isLoading = true;
       _message = '';
