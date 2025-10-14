@@ -75,36 +75,36 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         ),
         child: Column(
           children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.orange.shade100,
-                border: Border(
-                  bottom: BorderSide(color: Colors.orange.shade300),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.warning,
-                    color: Colors.orange.shade700,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Current Widget: ${_getWidgetName(_currentIndex)} - Contains bugs that need fixing!',
-                      style: TextStyle(
-                        color: Colors.orange.shade800,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            // Container(
+            //   width: double.infinity,
+            //   padding: const EdgeInsets.all(16),
+            //   decoration: BoxDecoration(
+            //     color: Colors.orange.shade100,
+            //     border: Border(
+            //       bottom: BorderSide(color: Colors.orange.shade300),
+            //     ),
+            //   ),
+            //   child: Row(
+            //     children: [
+            //       Icon(
+            //         Icons.warning,
+            //         color: Colors.orange.shade700,
+            //         size: 20,
+            //       ),
+            //       const SizedBox(width: 8),
+            //       Expanded(
+            //         child: Text(
+            //           'Current Widget: ${_getWidgetName(_currentIndex)} - Contains bugs that need fixing!',
+            //           style: TextStyle(
+            //             color: Colors.orange.shade800,
+            //             fontWeight: FontWeight.bold,
+            //             fontSize: 14,
+            //           ),
+            //         ),
+            //       ),
+            //     ],
+            //   ),
+            // ),
             Expanded(
               child: TabBarView(
                 controller: _tabController,
@@ -119,42 +119,42 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           ],
         ),
       ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.blue.shade50,
-          border: Border(
-            top: BorderSide(color: Colors.blue.shade200),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.info_outline, color: Colors.blue.shade700, size: 16),
-                const SizedBox(width: 8),
-                Text(
-                  'Find and fix the bugs in each widget!',
-                  style: TextStyle(
-                    color: Colors.blue.shade700,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Switch between tabs to test different widgets',
-              style: TextStyle(
-                color: Colors.blue.shade600,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-      ),
+      // bottomNavigationBar: Container(
+      //   padding: const EdgeInsets.all(16),
+      //   decoration: BoxDecoration(
+      //     color: Colors.blue.shade50,
+      //     border: Border(
+      //       top: BorderSide(color: Colors.blue.shade200),
+      //     ),
+      //   ),
+      //   child: Column(
+      //     mainAxisSize: MainAxisSize.min,
+      //     children: [
+      //       Row(
+      //         mainAxisAlignment: MainAxisAlignment.center,
+      //         children: [
+      //           Icon(Icons.info_outline, color: Colors.blue.shade700, size: 16),
+      //           const SizedBox(width: 8),
+      //           Text(
+      //             'Find and fix the bugs in each widget!',
+      //             style: TextStyle(
+      //               color: Colors.blue.shade700,
+      //               fontWeight: FontWeight.w500,
+      //             ),
+      //           ),
+      //         ],
+      //       ),
+      //       const SizedBox(height: 4),
+      //       Text(
+      //         'Switch between tabs to test different widgets',
+      //         style: TextStyle(
+      //           color: Colors.blue.shade600,
+      //           fontSize: 12,
+      //         ),
+      //       ),
+      //     ],
+      //   ),
+      // ),
     );
   }
 

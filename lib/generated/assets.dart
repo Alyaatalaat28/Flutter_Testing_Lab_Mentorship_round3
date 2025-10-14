@@ -3,7 +3,11 @@ class Assets {
   Assets._();
 
   static const String imagesAfterFixRegister = 'assets/images/after_fix_register.jpg';
+  static const String imagesAfterFixShopping = 'assets/images/after_fix_shopping.jpg';
+  static const String imagesAfterFixWeather = 'assets/images/after_fix_weather.png';
+  static const String imagesAfterFixWeatherTwo = 'assets/images/after_fix_weather_two.png';
   static const String imagesBeforeFixRegister = 'assets/images/before_fix_register.jpg';
   static const String imagesBeforeFixShopping = 'assets/images/before_fix_shopping.jpg';
+  static const String imagesBeforeFixWeather = 'assets/images/before_fix_weather.png';
 
 }
