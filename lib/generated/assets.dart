@@ -4,5 +4,6 @@ class Assets {
 
   static const String imagesAfterFixRegister = 'assets/images/after_fix_register.jpg';
   static const String imagesBeforeFixRegister = 'assets/images/before_fix_register.jpg';
+  static const String imagesBeforeFixShopping = 'assets/images/before_fix_shopping.jpg';
 
 }
