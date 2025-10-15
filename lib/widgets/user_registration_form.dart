@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/validators.dart';
 
 class UserRegistrationForm extends StatefulWidget {
   const UserRegistrationForm({super.key});
@@ -17,15 +18,17 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
   bool _isLoading = false;
   String _message = '';
 
-  bool isValidEmail(String email) {
-    return email.contains('@');
-  }
-
-  bool isValidPassword(String password) {
-    return true;
-  }
+  // Use Validators.isValidEmail and Validators.isStrongPassword directly in field validators.
 
   Future<void> _submitForm() async {
+    // Validate all fields before attempting submission
+    final formState = _formKey.currentState;
+    if (formState == null || !formState.validate()) {
+      setState(() {
+        _message = 'Please fix the errors in the form';
+      });
+      return;
+    }
     setState(() {
       _isLoading = true;
       _message = '';
@@ -77,7 +80,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
                 if (value == null || value.isEmpty) {
                   return 'Please enter your email';
                 }
-                if (!isValidEmail(value)) {
+                if (!Validators.isValidEmail(value)) {
                   return 'Please enter a valid email';
                 }
                 return null;
@@ -96,8 +99,8 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
                 if (value == null || value.isEmpty) {
                   return 'Please enter a password';
                 }
-                if (!isValidPassword(value)) {
-                  return 'Password is too weak';
+                if (!Validators.isStrongPassword(value)) {
+                  return 'Password must be at least 8 characters and include upper and lower case letters, a number and a special character';
                 }
                 return null;
               },
