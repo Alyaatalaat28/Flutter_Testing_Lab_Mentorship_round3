@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_testing_lab/helpers/validators.dart';
 
 class UserRegistrationForm extends StatefulWidget {
   const UserRegistrationForm({super.key});
@@ -17,15 +18,16 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
   bool _isLoading = false;
   String _message = '';
 
-  bool isValidEmail(String email) {
-    return email.contains('@');
+  static isValidEmail(String email) {
+    return Validators.isValidEmail(email);
   }
 
   bool isValidPassword(String password) {
-    return true;
+    return Validators.isValidPassword(password);
   }
 
   Future<void> _submitForm() async {
+    if (_formKey.currentState!.validate()) {
     setState(() {
       _isLoading = true;
       _message = '';
@@ -38,6 +40,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
       _isLoading = false;
       _message = 'Registration successful!';
     });
+    }
   }
 
   @override
@@ -67,6 +70,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
             ),
             const SizedBox(height: 16),
             TextFormField(
+              key: const Key('emailInput'),
               controller: _emailController,
               decoration: const InputDecoration(
                 labelText: 'Email',
@@ -85,6 +89,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
             ),
             const SizedBox(height: 16),
             TextFormField(
+              key: const Key('passwordInput'),
               controller: _passwordController,
               decoration: const InputDecoration(
                 labelText: 'Password',
@@ -122,6 +127,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
+              key: const Key('registerButton'),
               onPressed: _isLoading ? null : _submitForm,
               child: _isLoading
                   ? const CircularProgressIndicator()
