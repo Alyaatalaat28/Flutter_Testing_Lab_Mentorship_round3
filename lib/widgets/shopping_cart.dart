@@ -246,8 +246,11 @@ class _ShoppingCartState extends State<ShoppingCart> {
                           ),
                           IconButton(
                             key: Key("removeItem"),
-                            onPressed: () =>
-                                removeItem.removeItem(item.id, items: _items),
+                            onPressed: () {
+                              setState(() {
+                                removeItem.removeItem(item.id, items: _items);
+                              });
+                            },
 
                             icon: const Icon(Icons.delete),
                             color: Colors.red,
