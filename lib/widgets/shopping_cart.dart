@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_testing_lab/functions/cart/add_to_cart.dart';
+import 'package:flutter_testing_lab/functions/cart/cart.dart';
+import 'package:flutter_testing_lab/functions/cart/remove_item_cart.dart';
+import 'package:flutter_testing_lab/functions/cart/subtotal_cart.dart';
+import 'package:flutter_testing_lab/functions/cart/total_amount_cart.dart';
+import 'package:flutter_testing_lab/functions/cart/total_discount_cart.dart';
 
 class CartItem {
   final String id;
@@ -26,19 +32,11 @@ class ShoppingCart extends StatefulWidget {
 class _ShoppingCartState extends State<ShoppingCart> {
   final List<CartItem> _items = [];
 
-  void addItem(String id, String name, double price, {double discount = 0.0}) {
-    setState(() {
-      _items.add(
-        CartItem(id: id, name: name, price: price, discount: discount),
-      );
-    });
-  }
-
-  void removeItem(String id) {
-    setState(() {
-      _items.removeWhere((item) => item.id == id);
-    });
-  }
+  late AddItem shoppingCart;
+  late Subtotal subtotal;
+  late TotalDiscountCart totalDiscountCart;
+  late TotalAmount totalAmountCart;
+  late RemoveItem removeItem;
 
   void updateQuantity(String id, int newQuantity) {
     setState(() {
@@ -59,28 +57,24 @@ class _ShoppingCartState extends State<ShoppingCart> {
     });
   }
 
-  double get subtotal {
-    double total = 0;
-    for (var item in _items) {
-      total += item.price * item.quantity;
-    }
-    return total;
-  }
-
-  double get totalDiscount {
-    double discount = 0;
-    for (var item in _items) {
-      discount += item.discount * item.quantity;
-    }
-    return discount;
-  }
-
-  double get totalAmount {
-    return subtotal + totalDiscount;
-  }
-
   int get totalItems {
     return _items.fold(0, (sum, item) => sum + item.quantity);
+  }
+
+  late TotalDiscount totalDiscount;
+
+  @override
+  void initState() {
+    shoppingCart = AddToCart(cartItem: _items);
+    subtotal = SubtotalCart();
+    totalDiscountCart = TotalDiscountCart();
+    totalAmountCart = TotalAmountCart(
+      subtotalCart: subtotal,
+      totalDiscount: totalDiscountCart,
+    );
+    removeItem = RemoveItemCart();
+
+    super.initState();
   }
 
   @override
@@ -91,22 +85,62 @@ class _ShoppingCartState extends State<ShoppingCart> {
           spacing: 8,
           children: [
             ElevatedButton(
-              onPressed: () =>
-                  addItem('1', 'Apple iPhone', 999.99, discount: 0.1),
+              onPressed: () {
+                setState(() {
+                  shoppingCart.addItem(
+                    CartItem(
+                      id: '1',
+                      name: 'Apple iPhone',
+                      price: 999.9,
+                      discount: 0.1,
+                    ),
+                  );
+                });
+              },
+
               child: const Text('Add iPhone'),
             ),
             ElevatedButton(
-              onPressed: () =>
-                  addItem('2', 'Samsung Galaxy', 899.99, discount: 0.15),
+              onPressed: () => setState(() {
+                shoppingCart = AddToCart(cartItem: _items);
+                shoppingCart.addItem(
+                  CartItem(
+                    id: '2',
+                    name: 'Samsung Galaxy',
+                    price: 999.9,
+                    discount: 0.1,
+                  ),
+                );
+              }),
+
               child: const Text('Add Galaxy'),
             ),
             ElevatedButton(
-              onPressed: () => addItem('3', 'iPad Pro', 1099.99),
+              onPressed: () => setState(() {
+                shoppingCart.addItem(
+                  CartItem(
+                    id: '3',
+                    name: 'iPad Pro',
+                    price: 1099.99,
+                    discount: 0.1,
+                  ),
+                );
+              }),
+
               child: const Text('Add iPad'),
             ),
             ElevatedButton(
-              onPressed: () =>
-                  addItem('1', 'Apple iPhone', 999.99, discount: 0.1),
+              onPressed: () => setState(() {
+                shoppingCart.addItem(
+                  CartItem(
+                    id: '1',
+                    name: 'Apple iPhone',
+                    price: 999.9,
+                    discount: 0.1,
+                  ),
+                );
+              }),
+
               child: const Text('Add iPhone Again'),
             ),
           ],
@@ -136,16 +170,21 @@ class _ShoppingCartState extends State<ShoppingCart> {
                 ],
               ),
               const SizedBox(height: 8),
-              Text('Subtotal: \$${subtotal.toStringAsFixed(2)}'),
-              Text('Total Discount: \$${totalDiscount.toStringAsFixed(2)}'),
-              const Divider(),
               Text(
-                'Total Amount: \$${totalAmount.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
+                'Subtotal: \$${subtotal.subtotal(_items).toStringAsFixed(2)}',
               ),
+              Text(
+                'Total Discount: \$${totalAmountCart.totalAmount(carts: _items).toStringAsFixed(2)}',
+              ),
+              const Divider(),
+              // Text(
+              //   'Total Amount: \$${totalAmount}',
+              //   // ${totalAmount.toStringAsFixed(2)}',
+              //   style: const TextStyle(
+              //     fontWeight: FontWeight.bold,
+              //     fontSize: 18,
+              //   ),
+              // ),
             ],
           ),
         ),
@@ -159,6 +198,7 @@ class _ShoppingCartState extends State<ShoppingCart> {
                 itemCount: _items.length,
                 itemBuilder: (context, index) {
                   final item = _items[index];
+
                   final itemTotal = item.price * item.quantity;
 
                   return Card(
@@ -173,8 +213,10 @@ class _ShoppingCartState extends State<ShoppingCart> {
                           if (item.discount > 0)
                             Text(
                               'Discount: ${(item.discount * 100).toStringAsFixed(0)}%',
+
                               style: const TextStyle(color: Colors.green),
                             ),
+
                           Text('Item Total: \$${itemTotal.toStringAsFixed(2)}'),
                         ],
                       ),
@@ -203,7 +245,10 @@ class _ShoppingCartState extends State<ShoppingCart> {
                             icon: const Icon(Icons.add),
                           ),
                           IconButton(
-                            onPressed: () => removeItem(item.id),
+                            key: Key("removeItem"),
+                            onPressed: () =>
+                                removeItem.removeItem(item.id, items: _items),
+
                             icon: const Icon(Icons.delete),
                             color: Colors.red,
                           ),
