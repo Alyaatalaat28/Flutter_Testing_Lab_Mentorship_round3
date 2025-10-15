@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_testing_lab/home_page.dart';
+import 'package:flutter_testing_lab/widgets/shopping_cart.dart';
 
 void main() {
   runApp(const FlutterTestingLabApp());
@@ -16,7 +16,7 @@ class FlutterTestingLabApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: const HomePage(),
+      home: Scaffold(body: const ShoppingCart()),
       debugShowCheckedModeBanner: false,
     );
   }
