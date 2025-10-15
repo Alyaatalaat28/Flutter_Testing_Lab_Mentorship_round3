@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/validation.dart';
 
 class UserRegistrationForm extends StatefulWidget {
   const UserRegistrationForm({super.key});
@@ -17,14 +18,6 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
   bool _isLoading = false;
   String _message = '';
 
-  bool isValidEmail(String email) {
-    return email.contains('@');
-  }
-
-  bool isValidPassword(String password) {
-    return true;
-  }
-
   Future<void> _submitForm() async {
     setState(() {
       _isLoading = true;
@@ -33,6 +26,15 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
 
     // Simulate API call
     await Future.delayed(const Duration(seconds: 2));
+
+    // use form validation
+    if (!_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = false;
+        _message = 'Please fix the errors in red before submitting.';
+      });
+      return;
+    }
 
     setState(() {
       _isLoading = false;
@@ -51,19 +53,14 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
           children: [
             TextFormField(
               controller: _nameController,
+              onChanged: (value) => setState(() {
+                _formKey.currentState!.validate();
+              }),
               decoration: const InputDecoration(
                 labelText: 'Full Name',
                 border: OutlineInputBorder(),
               ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your full name';
-                }
-                if (value.length < 2) {
-                  return 'Name must be at least 2 characters';
-                }
-                return null;
-              },
+              validator: Validation.validateName,
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -73,58 +70,50 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
                 border: OutlineInputBorder(),
               ),
               keyboardType: TextInputType.emailAddress,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your email';
-                }
-                if (!isValidEmail(value)) {
-                  return 'Please enter a valid email';
-                }
-                return null;
-              },
+              validator: Validation.validateEmail,
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _passwordController,
+              onChanged: (value) => setState(() {
+                _formKey.currentState!.validate();
+              }),
               decoration: const InputDecoration(
                 labelText: 'Password',
                 border: OutlineInputBorder(),
                 helperText: 'At least 8 characters with numbers and symbols',
               ),
               obscureText: true,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter a password';
-                }
-                if (!isValidPassword(value)) {
-                  return 'Password is too weak';
-                }
-                return null;
-              },
+              validator: Validation.validatePassword,
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _confirmPasswordController,
+              onChanged: (value) => setState(() {
+                _formKey.currentState!.validate();
+              }),
               decoration: const InputDecoration(
                 labelText: 'Confirm Password',
                 border: OutlineInputBorder(),
               ),
               obscureText: true,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please confirm your password';
-                }
-                if (value != _passwordController.text) {
-                  return 'Passwords do not match';
-                }
-                return null;
-              },
+              validator: (value) => Validation.validateConfirmPassword(
+                value,
+                _passwordController.text,
+              ),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: _isLoading ? null : _submitForm,
               child: _isLoading
-                  ? const CircularProgressIndicator()
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
                   : const Text('Register'),
             ),
             if (_message.isNotEmpty)
