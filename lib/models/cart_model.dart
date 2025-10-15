@@ -30,8 +30,13 @@ class CartModel {
 
   UnmodifiableListView<CartItem> get items => UnmodifiableListView(_items);
 
-  void addItem(String id, String name, double price,
-      {double discount = 0.0, int quantity = 1}) {
+  void addItem(
+    String id,
+    String name,
+    double price, {
+    double discount = 0.0,
+    int quantity = 1,
+  }) {
     if (quantity <= 0) return;
     discount = discount.clamp(0.0, 1.0);
 
@@ -42,13 +47,15 @@ class CartModel {
       existing.discount = discount; // update discount if provided
     } else {
       final qty = quantity.clamp(1, maxQuantity);
-      _items.add(CartItem(
-        id: id,
-        name: name,
-        price: price,
-        quantity: qty,
-        discount: discount,
-      ));
+      _items.add(
+        CartItem(
+          id: id,
+          name: name,
+          price: price,
+          quantity: qty,
+          discount: discount,
+        ),
+      );
     }
   }
 
