@@ -17,11 +17,11 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
   final List<String> _cities = ['New York', 'London', 'Tokyo', 'Invalid City'];
 
   double celsiusToFahrenheit(double celsius) {
-    return celsius * 9 / 5;
+    return (celsius * 9/5) + 32;
   }
 
   double fahrenheitToCelsius(double fahrenheit) {
-    return fahrenheit - 32 * 5 / 9;
+    return (fahrenheit - 32) * 5/9;
   }
 
   // Simulate API call that sometimes returns null or malformed data
@@ -36,7 +36,10 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
     if (DateTime.now().millisecond % 4 == 0) {
       return {'city': city, 'temperature': 22.5}; 
     }
-
+    final temp = _weatherData?.temperatureCelsius;
+    if (temp == null) {
+      throw Exception("Temperature data is missing");
+    }
     return {
       'city': city,
       'temperature': city == 'London' ? 15.0 : (city == 'Tokyo' ? 25.0 : 22.5),
@@ -47,6 +50,7 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
       'windSpeed': city == 'London' ? 8.5 : (city == 'Tokyo' ? 5.2 : 12.3),
       'icon': city == 'London' ? '🌧️' : (city == 'Tokyo' ? '☁️' : '☀️'),
     };
+
   }
 
   Future<void> _loadWeather() async {
@@ -56,13 +60,25 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
         _error = null;
       });
     }
-
-    
+    try {
     final data = await _fetchWeatherData(_selectedCity);
+
+    if (data == null) {
+      throw Exception("No data returned from API");
+    }
+    if (data['temperature'] == null || data['city'] == null) {
+      throw Exception("Incomplete data received");
+    }
     setState(() {
       _weatherData = WeatherData.fromJson(data); 
       _isLoading = false;
     });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _error = e.toString();
+      });
+    }
   }
 
   @override
@@ -73,6 +89,19 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Text(
+          _error!,
+          style: const TextStyle(color: Colors.red, fontSize: 16),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -238,15 +267,20 @@ class WeatherData {
     required this.icon,
   });
 
-  
+
   factory WeatherData.fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      throw Exception("Weather data is null");
+    }
+
     return WeatherData(
-      city: json!['city'],
-      temperatureCelsius: json['temperature'].toDouble(),
-      description: json['description'],
-      humidity: json['humidity'], 
-      windSpeed: json['windSpeed'].toDouble(), 
-      icon: json['icon'], 
+      city: json['city'] ?? 'Unknown',
+      temperatureCelsius: (json['temperature'] ?? 0).toDouble(),
+      description: json['description'] ?? 'No description',
+      humidity: json['humidity'] ?? 0,
+      windSpeed: (json['windSpeed'] ?? 0).toDouble(),
+      icon: json['icon'] ?? '❓',
     );
   }
+
 }
