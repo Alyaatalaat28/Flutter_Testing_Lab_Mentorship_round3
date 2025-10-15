@@ -3,6 +3,20 @@ import 'package:flutter/material.dart';
 class UserRegistrationForm extends StatefulWidget {
   const UserRegistrationForm({super.key});
 
+  //  static versions for testing (unit test friendly)
+  static bool isValidEmail(String email) {
+    final regex = RegExp(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$");
+    return regex.hasMatch(email.trim());
+  }
+
+  static bool isValidPassword(String password) {
+    if (password.length < 8) return false;
+    final hasUpper = RegExp(r'[A-Z]').hasMatch(password);
+    final hasDigit = RegExp(r'\d').hasMatch(password);
+    final hasSpecial = RegExp(r'[!@#\$%^&*(),.?":{}|<>]').hasMatch(password);
+    return hasUpper && hasDigit && hasSpecial;
+  }
+
   @override
   State<UserRegistrationForm> createState() => _UserRegistrationFormState();
 }
@@ -17,22 +31,12 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
   bool _isLoading = false;
   String _message = '';
 
-  //  Email validation
-  bool isValidEmail(String email) {
-    final regex = RegExp(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$");
-    return regex.hasMatch(email.trim());
-  }
+  //  internal logic used by the widget
+  bool isValidEmail(String email) => UserRegistrationForm.isValidEmail(email);
 
-  // Password strength validation
-  bool isValidPassword(String password) {
-    if (password.length < 8) return false;
-    final hasUpper = RegExp(r'[A-Z]').hasMatch(password);
-    final hasDigit = RegExp(r'\d').hasMatch(password);
-    final hasSpecial = RegExp(r'[!@#\$%^&*(),.?":{}|<>]').hasMatch(password);
-    return hasUpper && hasDigit && hasSpecial;
-  }
+  bool isValidPassword(String password) =>
+      UserRegistrationForm.isValidPassword(password);
 
-  //  Validation submit
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -43,7 +47,6 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
       _message = '';
     });
 
-    // Simulate API call
     await Future.delayed(const Duration(seconds: 2));
 
     setState(() {
@@ -61,7 +64,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            //  Name
+            // Name
             TextFormField(
               controller: _nameController,
               decoration: const InputDecoration(
@@ -79,7 +82,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
               },
             ),
             const SizedBox(height: 16),
-            //  Email
+            // Email
             TextFormField(
               controller: _emailController,
               decoration: const InputDecoration(
@@ -98,7 +101,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
               },
             ),
             const SizedBox(height: 16),
-            //  Password
+            // Password
             TextFormField(
               controller: _passwordController,
               decoration: const InputDecoration(
@@ -118,7 +121,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
               },
             ),
             const SizedBox(height: 16),
-            //  Confirm Password
+            // Confirm Password
             TextFormField(
               controller: _confirmPasswordController,
               decoration: const InputDecoration(
@@ -137,7 +140,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
               },
             ),
             const SizedBox(height: 24),
-            //  Button
+            // Button
             ElevatedButton(
               onPressed: _isLoading ? null : _submitForm,
               child: _isLoading
