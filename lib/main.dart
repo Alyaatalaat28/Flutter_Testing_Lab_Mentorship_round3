@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_testing_lab/widgets/shopping_cart.dart';
+import 'package:flutter_testing_lab/widgets/weather_display.dart';
 
 void main() {
   runApp(const FlutterTestingLabApp());
@@ -16,7 +16,7 @@ class FlutterTestingLabApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: Scaffold(body: const ShoppingCart()),
+      home: Scaffold(body: const WeatherDisplay()),
       debugShowCheckedModeBanner: false,
     );
   }
