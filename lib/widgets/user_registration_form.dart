@@ -3,6 +3,20 @@ import 'package:flutter/material.dart';
 class UserRegistrationForm extends StatefulWidget {
   const UserRegistrationForm({super.key});
 
+  //  static versions for testing (unit test friendly)
+  static bool isValidEmail(String email) {
+    final regex = RegExp(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$");
+    return regex.hasMatch(email.trim());
+  }
+
+  static bool isValidPassword(String password) {
+    if (password.length < 8) return false;
+    final hasUpper = RegExp(r'[A-Z]').hasMatch(password);
+    final hasDigit = RegExp(r'\d').hasMatch(password);
+    final hasSpecial = RegExp(r'[!@#\$%^&*(),.?":{}|<>]').hasMatch(password);
+    return hasUpper && hasDigit && hasSpecial;
+  }
+
   @override
   State<UserRegistrationForm> createState() => _UserRegistrationFormState();
 }
@@ -17,21 +31,22 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
   bool _isLoading = false;
   String _message = '';
 
-  bool isValidEmail(String email) {
-    return email.contains('@');
-  }
+  //  internal logic used by the widget
+  bool isValidEmail(String email) => UserRegistrationForm.isValidEmail(email);
 
-  bool isValidPassword(String password) {
-    return true;
-  }
+  bool isValidPassword(String password) =>
+      UserRegistrationForm.isValidPassword(password);
 
   Future<void> _submitForm() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _message = '';
     });
 
-    // Simulate API call
     await Future.delayed(const Duration(seconds: 2));
 
     setState(() {
@@ -49,6 +64,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Name
             TextFormField(
               controller: _nameController,
               decoration: const InputDecoration(
@@ -66,6 +82,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
               },
             ),
             const SizedBox(height: 16),
+            // Email
             TextFormField(
               controller: _emailController,
               decoration: const InputDecoration(
@@ -84,12 +101,13 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
               },
             ),
             const SizedBox(height: 16),
+            // Password
             TextFormField(
               controller: _passwordController,
               decoration: const InputDecoration(
                 labelText: 'Password',
                 border: OutlineInputBorder(),
-                helperText: 'At least 8 characters with numbers and symbols',
+                helperText: 'At least 8 characters, 1 uppercase, number, and symbol',
               ),
               obscureText: true,
               validator: (value) {
@@ -103,6 +121,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
               },
             ),
             const SizedBox(height: 16),
+            // Confirm Password
             TextFormField(
               controller: _confirmPasswordController,
               decoration: const InputDecoration(
@@ -121,10 +140,15 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
               },
             ),
             const SizedBox(height: 24),
+            // Button
             ElevatedButton(
               onPressed: _isLoading ? null : _submitForm,
               child: _isLoading
-                  ? const CircularProgressIndicator()
+                  ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
                   : const Text('Register'),
             ),
             if (_message.isNotEmpty)
