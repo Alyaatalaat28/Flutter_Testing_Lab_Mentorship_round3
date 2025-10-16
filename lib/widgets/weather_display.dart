@@ -16,12 +16,13 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
 
   final List<String> _cities = ['New York', 'London', 'Tokyo', 'Invalid City'];
 
+  // ✅ Correct temperature conversions
   double celsiusToFahrenheit(double celsius) {
-    return celsius * 9 / 5;
+    return celsius * 9 / 5 + 32;
   }
 
   double fahrenheitToCelsius(double fahrenheit) {
-    return fahrenheit - 32 * 5 / 9;
+    return (fahrenheit - 32) * 5 / 9;
   }
 
   // Simulate API call that sometimes returns null or malformed data
@@ -32,9 +33,8 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
       return null;
     }
 
-    
     if (DateTime.now().millisecond % 4 == 0) {
-      return {'city': city, 'temperature': 22.5}; 
+      return {'city': city, 'temperature': 22.5};
     }
 
     return {
@@ -50,17 +50,32 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
   }
 
   Future<void> _loadWeather() async {
-    if (mounted) {
-      setState(() {
-        _isLoading = true;
-        _error = null;
-      });
-    }
+    if (!mounted) return;
 
-    
-    final data = await _fetchWeatherData(_selectedCity);
     setState(() {
-      _weatherData = WeatherData.fromJson(data); 
+      _isLoading = true;
+      _error = null;
+    });
+
+    final data = await _fetchWeatherData(_selectedCity);
+
+    if (!mounted) return;
+
+    setState(() {
+      if (data == null ||
+          !data.containsKey('city') ||
+          !data.containsKey('temperature')) {
+        _error = 'Failed to fetch weather data';
+        _weatherData = null;
+      } else {
+        try {
+          _weatherData = WeatherData.fromJson(data);
+          _error = null;
+        } catch (e) {
+          _error = 'Invalid weather data';
+          _weatherData = null;
+        }
+      }
       _isLoading = false;
     });
   }
@@ -127,9 +142,13 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
           ),
           const SizedBox(height: 16),
 
-          if (_isLoading && _error == null)
+          // Loading, error or weather display
+          if (_isLoading)
             const Center(child: CircularProgressIndicator())
-          
+          else if (_error != null)
+            Center(
+              child: Text(_error!, style: const TextStyle(color: Colors.red)),
+            )
           else if (_weatherData != null)
             Card(
               elevation: 4,
@@ -199,8 +218,7 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
                   ],
                 ),
               ),
-            )
-          
+            ),
         ],
       ),
     );
@@ -238,15 +256,21 @@ class WeatherData {
     required this.icon,
   });
 
-  
+  // ✅ Null-safe factory with defaults
   factory WeatherData.fromJson(Map<String, dynamic>? json) {
+    if (json == null ||
+        !json.containsKey('city') ||
+        !json.containsKey('temperature')) {
+      throw Exception('Invalid weather data');
+    }
+
     return WeatherData(
-      city: json!['city'],
-      temperatureCelsius: json['temperature'].toDouble(),
-      description: json['description'],
-      humidity: json['humidity'], 
-      windSpeed: json['windSpeed'].toDouble(), 
-      icon: json['icon'], 
+      city: json['city'] as String,
+      temperatureCelsius: (json['temperature'] as num).toDouble(),
+      description: json['description'] as String? ?? 'No description',
+      humidity: (json['humidity'] as num?)?.toInt() ?? 0,
+      windSpeed: (json['windSpeed'] as num?)?.toDouble() ?? 0.0,
+      icon: json['icon'] as String? ?? '❓',
     );
   }
 }
