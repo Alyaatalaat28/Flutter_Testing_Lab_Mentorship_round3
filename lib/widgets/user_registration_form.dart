@@ -18,11 +18,13 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
   String _message = '';
 
   bool isValidEmail(String email) {
-    return email.contains('@');
+    final regex = RegExp(r'^[\w\.\-]+@[\w\-]+\.[a-zA-Z]{2,}$');
+    return regex.hasMatch(email);
   }
 
   bool isValidPassword(String password) {
-    return true;
+    final regex = RegExp(r'^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$');
+    return regex.hasMatch(password);
   }
 
   Future<void> _submitForm() async {
@@ -122,11 +124,18 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: _isLoading ? null : _submitForm,
+              onPressed: _isLoading
+                  ? null
+                  : () {
+                      if (_formKey.currentState!.validate()) {
+                        _submitForm();
+                      }
+                    },
               child: _isLoading
                   ? const CircularProgressIndicator()
                   : const Text('Register'),
             ),
+
             if (_message.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 16),
