@@ -1,5 +1,51 @@
 import 'package:flutter/material.dart';
 
+class ValidationService {
+  String? validateName(String? name) {
+    if (name == null || name.isEmpty) {
+      return 'Full name is required';
+    }
+    if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(name)) {
+      return 'Name should contain only letters and spaces';
+    }
+    return null;
+  }
+
+  String? validateEmail(String? email) {
+    if (email == null || email.isEmpty) {
+      return 'Email is required';
+    }
+    if (!RegExp(
+      r'^[a-zA-Z][a-zA-Z._%+-]*@[a-zA-Z.-]+\.[a-zA-Z]{2,}$',
+    ).hasMatch(email)) {
+      return 'Invalid email format (only letters allowed in local part)';
+    }
+    return null;
+  }
+
+  String? validatePassword(String? password) {
+    if (password == null || password.isEmpty) {
+      return 'Password is required';
+    }
+    if (!RegExp(
+      r'^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[@#$%^&+=]).{8,}$',
+    ).hasMatch(password)) {
+      return 'Password must be at least 8 characters long, include uppercase, lowercase, numbers, and special characters.';
+    }
+    return null;
+  }
+
+  String? validateConfirmPassword(String? confirmPassword, String? password) {
+    if (confirmPassword == null || confirmPassword.isEmpty) {
+      return 'Please confirm your password';
+    }
+    if (confirmPassword != password) {
+      return 'Passwords do not match';
+    }
+    return null;
+  }
+}
+
 class UserRegistrationForm extends StatefulWidget {
   const UserRegistrationForm({super.key});
 
@@ -8,6 +54,7 @@ class UserRegistrationForm extends StatefulWidget {
 }
 
 class _UserRegistrationFormState extends State<UserRegistrationForm> {
+  final _validationService = ValidationService();
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -17,27 +64,31 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
   bool _isLoading = false;
   String _message = '';
 
-  bool isValidEmail(String email) {
-    return email.contains('@');
-  }
-
-  bool isValidPassword(String password) {
-    return true;
-  }
-
   Future<void> _submitForm() async {
+    if (!_formKey.currentState!.validate()) {
+      setState(() {
+        _message = 'Please correct the errors in the form.';
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _message = '';
     });
 
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
-
-    setState(() {
-      _isLoading = false;
-      _message = 'Registration successful!';
-    });
+    try {
+      await Future.delayed(const Duration(seconds: 2));
+      setState(() {
+        _isLoading = false;
+        _message = 'Registration successful!';
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _message = 'Registration failed: ${e.toString()}';
+      });
+    }
   }
 
   @override
@@ -55,15 +106,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
                 labelText: 'Full Name',
                 border: OutlineInputBorder(),
               ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your full name';
-                }
-                if (value.length < 2) {
-                  return 'Name must be at least 2 characters';
-                }
-                return null;
-              },
+              validator: _validationService.validateName,
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -73,15 +116,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
                 border: OutlineInputBorder(),
               ),
               keyboardType: TextInputType.emailAddress,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your email';
-                }
-                if (!isValidEmail(value)) {
-                  return 'Please enter a valid email';
-                }
-                return null;
-              },
+              validator: _validationService.validateEmail,
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -89,18 +124,10 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
               decoration: const InputDecoration(
                 labelText: 'Password',
                 border: OutlineInputBorder(),
-                helperText: 'At least 8 characters with numbers and symbols',
+                helperText: 'Min 8 chars, incl. A-Z, a-z, 0-9, and symbols',
               ),
               obscureText: true,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter a password';
-                }
-                if (!isValidPassword(value)) {
-                  return 'Password is too weak';
-                }
-                return null;
-              },
+              validator: _validationService.validatePassword,
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -110,21 +137,20 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
                 border: OutlineInputBorder(),
               ),
               obscureText: true,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please confirm your password';
-                }
-                if (value != _passwordController.text) {
-                  return 'Passwords do not match';
-                }
-                return null;
-              },
+              validator: (value) => _validationService.validateConfirmPassword(
+                value,
+                _passwordController.text,
+              ),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: _isLoading ? null : _submitForm,
               child: _isLoading
-                  ? const CircularProgressIndicator()
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 3),
+                    )
                   : const Text('Register'),
             ),
             if (_message.isNotEmpty)
