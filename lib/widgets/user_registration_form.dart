@@ -17,15 +17,28 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
   bool _isLoading = false;
   String _message = '';
 
+  // ✅ Improved Email Validation (strict regex)
   bool isValidEmail(String email) {
-    return email.contains('@');
+    final regex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
+    return regex.hasMatch(email.trim());
   }
 
+  // ✅ Strong Password Validation
   bool isValidPassword(String password) {
+    if (password.length < 8) return false;
+    if (!RegExp(r'[A-Z]').hasMatch(password)) return false; // uppercase
+    if (!RegExp(r'[a-z]').hasMatch(password)) return false; // lowercase
+    if (!RegExp(r'[0-9]').hasMatch(password)) return false; // digit
+    if (!RegExp(r'[!@#\$&*~^%()_+\-=\[\]{};:"\\|,.<>\/?]').hasMatch(password)) {
+      return false; // special character
+    }
     return true;
   }
 
   Future<void> _submitForm() async {
+    // ✅ Validate before submit
+    if (!_formKey.currentState!.validate()) return;
+
     setState(() {
       _isLoading = true;
       _message = '';
@@ -89,7 +102,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
               decoration: const InputDecoration(
                 labelText: 'Password',
                 border: OutlineInputBorder(),
-                helperText: 'At least 8 characters with numbers and symbols',
+                helperText: 'At least 8 characters, include upper, lower, number & symbol',
               ),
               obscureText: true,
               validator: (value) {
@@ -97,7 +110,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
                   return 'Please enter a password';
                 }
                 if (!isValidPassword(value)) {
-                  return 'Password is too weak';
+                  return 'Password must include upper, lower, number, and special character';
                 }
                 return null;
               },
@@ -124,7 +137,11 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
             ElevatedButton(
               onPressed: _isLoading ? null : _submitForm,
               child: _isLoading
-                  ? const CircularProgressIndicator()
+                  ? const SizedBox(
+                      height: 24,
+                      width: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Text('Register'),
             ),
             if (_message.isNotEmpty)
