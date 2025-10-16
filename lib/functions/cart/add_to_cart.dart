@@ -8,7 +8,7 @@ class AddToCart implements AddItem {
   void addItem(CartItem cartItem) {
     int index = _cartItem.indexWhere((test) => test.id == cartItem.id);
     if (index != -1) {
-      _cartItem.last.quantity++;
+      _cartItem[index].quantity++;
     } else {
       _cartItem.add(cartItem);
     }
