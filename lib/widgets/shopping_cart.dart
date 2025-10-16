@@ -5,7 +5,7 @@ class CartItem {
   final String name;
   final double price;
   int quantity;
-  final double discount; // Discount percentage (0.0 to 1.0)
+  final double discount; // 0.0 to 1.0
 
   CartItem({
     required this.id,
@@ -28,9 +28,13 @@ class _ShoppingCartState extends State<ShoppingCart> {
 
   void addItem(String id, String name, double price, {double discount = 0.0}) {
     setState(() {
-      _items.add(
-        CartItem(id: id, name: name, price: price, discount: discount),
-      );
+      final existingIndex = _items.indexWhere((item) => item.id == id);
+      if (existingIndex != -1) {
+        // ✅ Update quantity if already exists
+        _items[existingIndex].quantity += 1;
+      } else {
+        _items.add(CartItem(id: id, name: name, price: price, discount: discount));
+      }
     });
   }
 
@@ -68,15 +72,15 @@ class _ShoppingCartState extends State<ShoppingCart> {
   }
 
   double get totalDiscount {
-    double discount = 0;
+    double discountAmount = 0;
     for (var item in _items) {
-      discount += item.discount * item.quantity;
+      discountAmount += (item.price * item.discount) * item.quantity;
     }
-    return discount;
+    return discountAmount;
   }
 
   double get totalAmount {
-    return subtotal + totalDiscount;
+    return subtotal - totalDiscount; // ✅ Corrected logic
   }
 
   int get totalItems {
@@ -91,13 +95,11 @@ class _ShoppingCartState extends State<ShoppingCart> {
           spacing: 8,
           children: [
             ElevatedButton(
-              onPressed: () =>
-                  addItem('1', 'Apple iPhone', 999.99, discount: 0.1),
+              onPressed: () => addItem('1', 'Apple iPhone', 999.99, discount: 0.1),
               child: const Text('Add iPhone'),
             ),
             ElevatedButton(
-              onPressed: () =>
-                  addItem('2', 'Samsung Galaxy', 899.99, discount: 0.15),
+              onPressed: () => addItem('2', 'Samsung Galaxy', 899.99, discount: 0.15),
               child: const Text('Add Galaxy'),
             ),
             ElevatedButton(
@@ -105,8 +107,7 @@ class _ShoppingCartState extends State<ShoppingCart> {
               child: const Text('Add iPad'),
             ),
             ElevatedButton(
-              onPressed: () =>
-                  addItem('1', 'Apple iPhone', 999.99, discount: 0.1),
+              onPressed: () => addItem('1', 'Apple iPhone', 999.99, discount: 0.1),
               child: const Text('Add iPhone Again'),
             ),
           ],
@@ -137,7 +138,7 @@ class _ShoppingCartState extends State<ShoppingCart> {
               ),
               const SizedBox(height: 8),
               Text('Subtotal: \$${subtotal.toStringAsFixed(2)}'),
-              Text('Total Discount: \$${totalDiscount.toStringAsFixed(2)}'),
+              Text('Discount: -\$${totalDiscount.toStringAsFixed(2)}'),
               const Divider(),
               Text(
                 'Total Amount: \$${totalAmount.toStringAsFixed(2)}',
@@ -154,12 +155,12 @@ class _ShoppingCartState extends State<ShoppingCart> {
         _items.isEmpty
             ? const Center(child: Text('Cart is empty'))
             : ListView.builder(
-                physics: NeverScrollableScrollPhysics(),
+                physics: const NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
                 itemCount: _items.length,
                 itemBuilder: (context, index) {
                   final item = _items[index];
-                  final itemTotal = item.price * item.quantity;
+                  final itemTotal = (item.price - (item.price * item.discount)) * item.quantity;
 
                   return Card(
                     child: ListTile(
@@ -167,9 +168,7 @@ class _ShoppingCartState extends State<ShoppingCart> {
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Price: \$${item.price.toStringAsFixed(2)} each',
-                          ),
+                          Text('Price: \$${item.price.toStringAsFixed(2)} each'),
                           if (item.discount > 0)
                             Text(
                               'Discount: ${(item.discount * 100).toStringAsFixed(0)}%',
@@ -182,15 +181,11 @@ class _ShoppingCartState extends State<ShoppingCart> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            onPressed: () =>
-                                updateQuantity(item.id, item.quantity - 1),
+                            onPressed: () => updateQuantity(item.id, item.quantity - 1),
                             icon: const Icon(Icons.remove),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 4,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                             decoration: BoxDecoration(
                               border: Border.all(color: Colors.grey),
                               borderRadius: BorderRadius.circular(4),
@@ -198,8 +193,7 @@ class _ShoppingCartState extends State<ShoppingCart> {
                             child: Text('${item.quantity}'),
                           ),
                           IconButton(
-                            onPressed: () =>
-                                updateQuantity(item.id, item.quantity + 1),
+                            onPressed: () => updateQuantity(item.id, item.quantity + 1),
                             icon: const Icon(Icons.add),
                           ),
                           IconButton(
