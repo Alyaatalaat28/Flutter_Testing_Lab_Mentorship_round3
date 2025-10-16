@@ -25,14 +25,20 @@ class ShoppingCart extends StatefulWidget {
 
 class _ShoppingCartState extends State<ShoppingCart> {
   final List<CartItem> _items = [];
-
-  void addItem(String id, String name, double price, {double discount = 0.0}) {
-    setState(() {
+void addItem(String id, String name, double price, {double discount = 0.0}) {
+  setState(() {
+    final index = _items.indexWhere((item) => item.id == id);
+    if (index != -1) {
+      // تحديث الكمية
+      _items[index].quantity += 1;
+    } else {
       _items.add(
         CartItem(id: id, name: name, price: price, discount: discount),
       );
-    });
-  }
+    }
+  });
+}
+
 
   void removeItem(String id) {
     setState(() {
@@ -60,24 +66,27 @@ class _ShoppingCartState extends State<ShoppingCart> {
   }
 
   double get subtotal {
-    double total = 0;
-    for (var item in _items) {
-      total += item.price * item.quantity;
-    }
-    return total;
+  double total = 0;
+  for (var item in _items) {
+    total += item.price * item.quantity;
   }
+  return total;
+}
+
 
   double get totalDiscount {
-    double discount = 0;
-    for (var item in _items) {
-      discount += item.discount * item.quantity;
-    }
-    return discount;
+  double discount = 0;
+  for (var item in _items) {
+    discount += item.price * item.quantity * item.discount;
   }
+  return discount;
+}
+
 
   double get totalAmount {
-    return subtotal + totalDiscount;
-  }
+  return subtotal - totalDiscount;
+}
+
 
   int get totalItems {
     return _items.fold(0, (sum, item) => sum + item.quantity);
