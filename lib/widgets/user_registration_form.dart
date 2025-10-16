@@ -4,10 +4,10 @@ class UserRegistrationForm extends StatefulWidget {
   const UserRegistrationForm({super.key});
 
   @override
-  State<UserRegistrationForm> createState() => _UserRegistrationFormState();
+  State<UserRegistrationForm> createState() => UserRegistrationFormState();
 }
 
-class _UserRegistrationFormState extends State<UserRegistrationForm> {
+class UserRegistrationFormState extends State<UserRegistrationForm> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -102,7 +102,8 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
               decoration: const InputDecoration(
                 labelText: 'Password',
                 border: OutlineInputBorder(),
-                helperText: 'At least 8 characters, include upper, lower, number & symbol',
+                helperText:
+                    'At least 8 characters, include upper, lower, number & symbol',
               ),
               obscureText: true,
               validator: (value) {
