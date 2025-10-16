@@ -24,8 +24,8 @@ void main() {
 
     test("password success", () {
       isEmail = interface.isValidConfirmPassword(
-        confirmPassword: "Ayman123@",
-        password: "Ayman1234@",
+        confirmPassword: "Test123@",
+        password: "Test1234@",
       );
       expect(isEmail, true);
     });
@@ -63,15 +63,15 @@ void main() {
       await widgetTester.pumpWidget(
         MaterialApp(home: Scaffold(body: UserRegistrationForm())),
       );
-      await widgetTester.enterText(find.byKey(Key("FullName")), "AymanShawqi");
+      await widgetTester.enterText(find.byKey(Key("FullName")), "Test");
       await widgetTester.enterText(
         find.byKey(Key("Email")),
         "ayman808sh@gmail.com",
       );
-      await widgetTester.enterText(find.byKey(Key("Password")), "Ayman123@");
+      await widgetTester.enterText(find.byKey(Key("Password")), "Test123@");
       await widgetTester.enterText(
         find.byKey(Key("ConfirmPassword")),
-        "Ayman123@",
+        "Test123@",
       );
       button = find.byKey(Key("Register"));
       await widgetTester.tap(button);
