@@ -54,8 +54,8 @@ class WeatherData {
 }
 
 /// Pure helpers (easy to unit test)
-double celsiusToFahrenheit(double c) => (c * 9 / 5) + 32;        // ✅ fixed
-double fahrenheitToCelsius(double f) => (f - 32) * 5 / 9;        // ✅ fixed
+double celsiusToFahrenheit(double c) => (c * 9 / 5) + 32; // ✅ fixed
+double fahrenheitToCelsius(double f) => (f - 32) * 5 / 9; // ✅ fixed
 
 class WeatherDisplay extends StatefulWidget {
   const WeatherDisplay({
@@ -82,7 +82,12 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
   bool _useFahrenheit = false;
   late String _selectedCity;
 
-  final List<String> _cities = const ['New York', 'London', 'Tokyo', 'Invalid City'];
+  final List<String> _cities = const [
+    'New York',
+    'London',
+    'Tokyo',
+    'Invalid City',
+  ];
 
   // Simulated API when not overridden (sometimes incomplete)
   Future<Map<String, dynamic>?> _defaultFetch(String city) async {
@@ -97,7 +102,9 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
     return {
       'city': city,
       'temperature': city == 'London' ? 15.0 : (city == 'Tokyo' ? 25.0 : 22.5),
-      'description': city == 'London' ? 'Rainy' : (city == 'Tokyo' ? 'Cloudy' : 'Sunny'),
+      'description': city == 'London'
+          ? 'Rainy'
+          : (city == 'Tokyo' ? 'Cloudy' : 'Sunny'),
       'humidity': city == 'London' ? 85 : (city == 'Tokyo' ? 70 : 65),
       'windSpeed': city == 'London' ? 8.5 : (city == 'Tokyo' ? 5.2 : 12.3),
       'icon': city == 'London' ? '🌧️' : (city == 'Tokyo' ? '☁️' : '☀️'),
@@ -167,7 +174,15 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
                   value: _selectedCity,
                   isExpanded: true,
                   items: _cities
-                      .map((city) => DropdownMenuItem(value: city, child: Text(city)))
+                      .map(
+                        (city) => DropdownMenuItem(
+                          value: city,
+                          child: Text(
+                            city,
+                            key: Key('cityText_$city'),
+                          ), // <-- Key added
+                        ),
+                      )
                       .toList(),
                   onChanged: (value) {
                     if (value != null) {
@@ -208,7 +223,11 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
             Center(
               child: Column(
                 children: [
-                  Text(_error!, key: const Key('errorText'), style: const TextStyle(color: Colors.red)),
+                  Text(
+                    _error!,
+                    key: const Key('errorText'),
+                    style: const TextStyle(color: Colors.red),
+                  ),
                   const SizedBox(height: 8),
                   ElevatedButton(
                     key: const Key('retryButton'),
@@ -228,17 +247,32 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
                   children: [
                     Row(
                       children: [
-                        Text(_weatherData!.icon, style: const TextStyle(fontSize: 48)),
+                        Text(
+                          _weatherData!.icon,
+                          style: const TextStyle(fontSize: 48),
+                        ),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(_weatherData!.city,
-                                  key: const Key('cityText'),
-                                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                              Text(_weatherData!.description,
-                                  style: const TextStyle(fontSize: 18, color: Colors.grey)),
+                              Text(
+                                _weatherData!.city,
+                                key: const Key(
+                                  'cityNameText',
+                                ), // <-- Key added here
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                _weatherData!.description,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.grey,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -251,15 +285,26 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
                             ? '${celsiusToFahrenheit(_weatherData!.temperatureCelsius).toStringAsFixed(1)}°F'
                             : '${_weatherData!.temperatureCelsius.toStringAsFixed(1)}°C',
                         key: const Key('tempText'),
-                        style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontSize: 48,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        _buildWeatherDetail('Humidity', '${_weatherData!.humidity}%', Icons.water_drop),
-                        _buildWeatherDetail('Wind Speed', '${_weatherData!.windSpeed} km/h', Icons.air),
+                        _buildWeatherDetail(
+                          'Humidity',
+                          '${_weatherData!.humidity}%',
+                          Icons.water_drop,
+                        ),
+                        _buildWeatherDetail(
+                          'Wind Speed',
+                          '${_weatherData!.windSpeed} km/h',
+                          Icons.air,
+                        ),
                       ],
                     ),
                   ],
@@ -277,7 +322,10 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
         Icon(icon, color: Colors.blue, size: 32),
         const SizedBox(height: 4),
         Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-        Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
       ],
     );
   }
