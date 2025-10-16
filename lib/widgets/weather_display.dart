@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import '../utils/weather_utils.dart';
+
+typedef WeatherFetcher = Future<Map<String, dynamic>?> Function(String city);
 
 class WeatherDisplay extends StatefulWidget {
-  const WeatherDisplay({super.key});
+  /// Optional fetcher injection for testing. If null, uses internal simulated fetcher.
+  final WeatherFetcher? fetcher;
+
+  const WeatherDisplay({super.key, this.fetcher});
 
   @override
   State<WeatherDisplay> createState() => _WeatherDisplayState();
@@ -16,33 +22,23 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
 
   final List<String> _cities = ['New York', 'London', 'Tokyo', 'Invalid City'];
 
-  double celsiusToFahrenheit(double celsius) {
-    return celsius * 9 / 5;
-  }
-
-  double fahrenheitToCelsius(double fahrenheit) {
-    return fahrenheit - 32 * 5 / 9;
-  }
-
-  // Simulate API call that sometimes returns null or malformed data
-  Future<Map<String, dynamic>?> _fetchWeatherData(String city) async {
+  /// Default simulated fetcher (kept for demo). Tests should inject their own.
+  Future<Map<String, dynamic>?> _defaultFetcher(String city) async {
     await Future.delayed(const Duration(seconds: 2));
 
     if (city == 'Invalid City') {
       return null;
     }
 
-    
+    // Occasionally return "minimal" data to simulate partial response
     if (DateTime.now().millisecond % 4 == 0) {
-      return {'city': city, 'temperature': 22.5}; 
+      return {'city': city, 'temperature': 22.5};
     }
 
     return {
       'city': city,
       'temperature': city == 'London' ? 15.0 : (city == 'Tokyo' ? 25.0 : 22.5),
-      'description': city == 'London'
-          ? 'Rainy'
-          : (city == 'Tokyo' ? 'Cloudy' : 'Sunny'),
+      'description': city == 'London' ? 'Rainy' : (city == 'Tokyo' ? 'Cloudy' : 'Sunny'),
       'humidity': city == 'London' ? 85 : (city == 'Tokyo' ? 70 : 65),
       'windSpeed': city == 'London' ? 8.5 : (city == 'Tokyo' ? 5.2 : 12.3),
       'icon': city == 'London' ? '🌧️' : (city == 'Tokyo' ? '☁️' : '☀️'),
@@ -50,19 +46,47 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
   }
 
   Future<void> _loadWeather() async {
-    if (mounted) {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+      // keep previous _weatherData visible while loading OR set to null if you prefer blank state
+      // _weatherData = null;
+    });
+
+    final fetcher = widget.fetcher ?? _defaultFetcher;
+
+    try {
+      final data = await fetcher(_selectedCity);
+
+      // Check for null and throw to unify error handling
+      if (data == null) {
+        throw WeatherException('No data returned from API for "$_selectedCity"');
+      }
+
+      final parsed = WeatherData.fromJson(data);
+
+      if (!mounted) return;
       setState(() {
-        _isLoading = true;
-        _error = null;
+        _weatherData = parsed;
+      });
+    } on WeatherException catch (we) {
+      if (!mounted) return;
+      setState(() {
+        _error = we.message;
+        _weatherData = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Failed to load weather data';
+        _weatherData = null;
+      });
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
       });
     }
-
-    
-    final data = await _fetchWeatherData(_selectedCity);
-    setState(() {
-      _weatherData = WeatherData.fromJson(data); 
-      _isLoading = false;
-    });
   }
 
   @override
@@ -102,7 +126,7 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
               ),
               const SizedBox(width: 8),
               ElevatedButton(
-                onPressed: _loadWeather,
+                onPressed: _isLoading ? null : _loadWeather,
                 child: const Text('Refresh'),
               ),
             ],
@@ -129,7 +153,13 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
 
           if (_isLoading && _error == null)
             const Center(child: CircularProgressIndicator())
-          
+          else if (_error != null)
+            Center(
+              child: Text(
+                _error!,
+                style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+              ),
+            )
           else if (_weatherData != null)
             Card(
               elevation: 4,
@@ -200,7 +230,8 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
                 ),
               ),
             )
-          
+          else
+            const SizedBox.shrink(),
         ],
       ),
     );
@@ -217,36 +248,6 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ],
-    );
-  }
-}
-
-class WeatherData {
-  final String city;
-  final double temperatureCelsius;
-  final String description;
-  final int humidity;
-  final double windSpeed;
-  final String icon;
-
-  WeatherData({
-    required this.city,
-    required this.temperatureCelsius,
-    required this.description,
-    required this.humidity,
-    required this.windSpeed,
-    required this.icon,
-  });
-
-  
-  factory WeatherData.fromJson(Map<String, dynamic>? json) {
-    return WeatherData(
-      city: json!['city'],
-      temperatureCelsius: json['temperature'].toDouble(),
-      description: json['description'],
-      humidity: json['humidity'], 
-      windSpeed: json['windSpeed'].toDouble(), 
-      icon: json['icon'], 
     );
   }
 }
