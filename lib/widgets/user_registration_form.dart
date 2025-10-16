@@ -47,7 +47,9 @@ class ValidationService {
 }
 
 class UserRegistrationForm extends StatefulWidget {
-  const UserRegistrationForm({super.key});
+  final Future<void> Function()? onSubmit; // Added for testing
+
+  const UserRegistrationForm({super.key, this.onSubmit});
 
   @override
   State<UserRegistrationForm> createState() => _UserRegistrationFormState();
@@ -78,7 +80,12 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
     });
 
     try {
-      await Future.delayed(const Duration(seconds: 2));
+      // Use onSubmit if provided (for testing), else default behavior
+      if (widget.onSubmit != null) {
+        await widget.onSubmit!();
+      } else {
+        await Future.delayed(const Duration(seconds: 2));
+      }
       setState(() {
         _isLoading = false;
         _message = 'Registration successful!';
@@ -106,6 +113,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
                 labelText: 'Full Name',
                 border: OutlineInputBorder(),
               ),
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               validator: _validationService.validateName,
             ),
             const SizedBox(height: 16),
@@ -116,6 +124,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
                 border: OutlineInputBorder(),
               ),
               keyboardType: TextInputType.emailAddress,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               validator: _validationService.validateEmail,
             ),
             const SizedBox(height: 16),
@@ -127,6 +136,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
                 helperText: 'Min 8 chars, incl. A-Z, a-z, 0-9, and symbols',
               ),
               obscureText: true,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               validator: _validationService.validatePassword,
             ),
             const SizedBox(height: 16),
@@ -137,6 +147,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
                 border: OutlineInputBorder(),
               ),
               obscureText: true,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               validator: (value) => _validationService.validateConfirmPassword(
                 value,
                 _passwordController.text,
