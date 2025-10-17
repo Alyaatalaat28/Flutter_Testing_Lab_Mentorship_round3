@@ -295,8 +295,12 @@ class WeatherData {
     required this.icon,
   });
 
-  //  null safety and validation done 👍
-  factory WeatherData.fromJson(Map<String, dynamic> json) {
+  factory WeatherData.fromJson(Map<String, dynamic>? json) {
+    // Validate json is not null
+    if (json == null) {
+      throw Exception('No weather data available');
+    }
+
     // Validate required fields
     if (!json.containsKey('city') || json['city'] == null) {
       throw Exception('Missing required field: city');
