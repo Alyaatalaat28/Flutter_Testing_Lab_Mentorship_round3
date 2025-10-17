@@ -5,4 +5,3 @@ extension StringExtensions on String? {
     return this == null || this == '';
   }
 }
-//fixing onPressed btn to check if form current state is validate or not and adding vaildation to password  done ?????

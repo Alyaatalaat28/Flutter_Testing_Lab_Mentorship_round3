@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_testing_lab/widgets/registration_form/widgets/custom_text_field.dart';
 import 'package:flutter_testing_lab/widgets/registration_form/widgets/form_validators.dart';
+import 'package:flutter_testing_lab/widgets/registration_form/widgets/register_btn.dart';
 
 class UserRegistrationForm extends StatefulWidget {
   const UserRegistrationForm({super.key});
@@ -18,7 +20,9 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
   bool _isLoading = false;
   String _message = '';
 
-  Future<void> _submitForm() async {
+  Future<void> btnOnPressed() async {
+    if (!_formKey.currentState!.validate()) return;
+
     setState(() {
       _isLoading = true;
       _message = '';
@@ -43,82 +47,47 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             //========================= name =====================
-            TextFormField(
+            CustomTextField(
               controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Full Name',
-                border: OutlineInputBorder(),
-              ),
-              validator: (value) {
-                FormValidators.validateName(value);
-                return null;
-              },
+              labelText: 'Full Name',
+              validator: FormValidators.validateName,
             ),
             const SizedBox(height: 16),
 
             //======================= email ====================
-            TextFormField(
+            CustomTextField(
               controller: _emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                border: OutlineInputBorder(),
-              ),
+              labelText: 'Email',
               keyboardType: TextInputType.emailAddress,
-              validator: (value) {
-                FormValidators.validateEmail(value);
-                return null;
-              },
+              validator: FormValidators.validateEmail,
             ),
             const SizedBox(height: 16),
 
             //======================= password ================
-            TextFormField(
+            CustomTextField(
               controller: _passwordController,
-              decoration: const InputDecoration(
-                labelText: 'Password',
-                border: OutlineInputBorder(),
-                helperText: 'At least 8 characters with numbers and symbols',
-              ),
+              labelText: 'Password',
               obscureText: true,
-              validator: (password) {
-                FormValidators.validatePassword(password);
-                return null;
-              },
+              helperText:
+                  'At least 8 chars, uppercase, lowercase, number, symbol',
+              validator: FormValidators.validatePassword,
             ),
             const SizedBox(height: 16),
 
             //======================= comfirmPassword ===========
-            TextFormField(
+            CustomTextField(
               controller: _confirmPasswordController,
-              decoration: const InputDecoration(
-                labelText: 'Confirm Password',
-                border: OutlineInputBorder(),
-              ),
+              labelText: 'Confirm Password',
               obscureText: true,
-              validator: (value) {
-                FormValidators.validateConfirmPassword(
-                  value,
-                  _passwordController.text,
-                );
-                return null;
-              },
+              validator: (value) => FormValidators.validateConfirmPassword(
+                value,
+                _passwordController.text,
+              ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 100),
 
             //===================== btn ====================
-            ElevatedButton(
-              onPressed: () {
-                if (_formKey.currentState!.validate()) {
-                  _submitForm();
-                }
-              },
-              child: _isLoading
-                  ? Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: const CircularProgressIndicator(),
-                    )
-                  : const Text('Register'),
-            ),
+            RegisterBtn(onPressed: btnOnPressed, isLoading: _isLoading),
             if (_message.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 16),
