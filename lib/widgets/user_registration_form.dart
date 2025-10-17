@@ -49,6 +49,8 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+
+            //========================= name =====================
             TextFormField(
               controller: _nameController,
               decoration: const InputDecoration(
@@ -66,6 +68,8 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
               },
             ),
             const SizedBox(height: 16),
+        
+            //======================= email ====================
             TextFormField(
               controller: _emailController,
               decoration: const InputDecoration(
@@ -84,6 +88,8 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
               },
             ),
             const SizedBox(height: 16),
+         
+            //======================= password ================
             TextFormField(
               controller: _passwordController,
               decoration: const InputDecoration(
@@ -103,6 +109,8 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
               },
             ),
             const SizedBox(height: 16),
+            
+            //======================= comfirmPassword ===========
             TextFormField(
               controller: _confirmPasswordController,
               decoration: const InputDecoration(
@@ -121,6 +129,9 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
               },
             ),
             const SizedBox(height: 24),
+            
+            
+            //===================== btn ====================
             ElevatedButton(
               onPressed: _isLoading ? null : _submitForm,
               child: _isLoading
