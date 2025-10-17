@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+
+
 class CartItem {
   final String id;
   final String name;
@@ -15,7 +17,6 @@ class CartItem {
     this.discount = 0.0,
   });
 }
-
 class ShoppingCart extends StatefulWidget {
   const ShoppingCart({super.key});
 
