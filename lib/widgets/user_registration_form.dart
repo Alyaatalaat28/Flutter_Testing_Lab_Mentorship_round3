@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 
 class ValidationService {
   String? validateName(String? name) {
-    if (name == null || name.isEmpty) {
-      return 'Full name is required';
-    }
+    if (name == null || name.isEmpty) return 'Full name is required';
     if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(name)) {
       return 'Name should contain only letters and spaces';
     }
@@ -12,9 +10,7 @@ class ValidationService {
   }
 
   String? validateEmail(String? email) {
-    if (email == null || email.isEmpty) {
-      return 'Email is required';
-    }
+    if (email == null || email.isEmpty) return 'Email is required';
     if (!RegExp(
       r'^[a-zA-Z][a-zA-Z._%+-]*@[a-zA-Z.-]+\.[a-zA-Z]{2,}$',
     ).hasMatch(email)) {
@@ -24,9 +20,7 @@ class ValidationService {
   }
 
   String? validatePassword(String? password) {
-    if (password == null || password.isEmpty) {
-      return 'Password is required';
-    }
+    if (password == null || password.isEmpty) return 'Password is required';
     if (!RegExp(
       r'^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9])(?=.*[@#$%^&+=]).{8,}$',
     ).hasMatch(password)) {
@@ -47,8 +41,7 @@ class ValidationService {
 }
 
 class UserRegistrationForm extends StatefulWidget {
-  final Future<void> Function()? onSubmit; // Added for testing
-
+  final Future<void> Function()? onSubmit; // For testing
   const UserRegistrationForm({super.key, this.onSubmit});
 
   @override
@@ -64,44 +57,56 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
   final _nameController = TextEditingController();
 
   bool _isLoading = false;
-  String _message = '';
 
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) {
-      setState(() {
-        _message = 'Please correct the errors in the form.';
-      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('❌ Please correct the errors in the form.'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 2),
+        ),
+      );
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-      _message = '';
-    });
+    setState(() => _isLoading = true);
 
     try {
-      // Use onSubmit if provided (for testing), else default behavior
       if (widget.onSubmit != null) {
         await widget.onSubmit!();
       } else {
         await Future.delayed(const Duration(seconds: 2));
       }
-      setState(() {
-        _isLoading = false;
-        _message = 'Registration successful!';
-      });
+
+      setState(() => _isLoading = false);
+
+      // ✅ Show success message in SnackBar
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✅ Registration successful!'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 3), // stays visible for screenshots
+        ),
+      );
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _message = 'Registration failed: ${e.toString()}';
-      });
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('❌ Registration failed: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 3),
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Form(
         key: _formKey,
         child: Column(
@@ -116,7 +121,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
               autovalidateMode: AutovalidateMode.onUserInteraction,
               validator: _validationService.validateName,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
             TextFormField(
               controller: _emailController,
               decoration: const InputDecoration(
@@ -127,7 +132,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
               autovalidateMode: AutovalidateMode.onUserInteraction,
               validator: _validationService.validateEmail,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
             TextFormField(
               controller: _passwordController,
               decoration: const InputDecoration(
@@ -139,7 +144,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
               autovalidateMode: AutovalidateMode.onUserInteraction,
               validator: _validationService.validatePassword,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
             TextFormField(
               controller: _confirmPasswordController,
               decoration: const InputDecoration(
@@ -153,7 +158,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
                 _passwordController.text,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _isLoading ? null : _submitForm,
               child: _isLoading
@@ -164,20 +169,6 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
                     )
                   : const Text('Register'),
             ),
-            if (_message.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: Text(
-                  _message,
-                  style: TextStyle(
-                    color: _message.contains('successful')
-                        ? Colors.green
-                        : Colors.red,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
           ],
         ),
       ),
