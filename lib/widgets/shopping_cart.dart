@@ -20,17 +20,28 @@ class ShoppingCart extends StatefulWidget {
   const ShoppingCart({super.key});
 
   @override
-  State<ShoppingCart> createState() => _ShoppingCartState();
+  State<ShoppingCart> createState() => ShoppingCartState();
 }
 
-class _ShoppingCartState extends State<ShoppingCart> {
+class ShoppingCartState extends State<ShoppingCart> {
   final List<CartItem> _items = [];
+
+  
+  
+  List<CartItem> get items => List.unmodifiable(_items);
 
   void addItem(String id, String name, double price, {double discount = 0.0}) {
     setState(() {
-      _items.add(
-        CartItem(id: id, name: name, price: price, discount: discount),
-      );
+      final duplicateIndex = _items.indexWhere((item) => item.id == id);
+
+      if (duplicateIndex != -1) {
+        
+        _items[duplicateIndex].quantity++;
+      } else {
+        _items.add(
+          CartItem(id: id, name: name, price: price, discount: discount),
+        );
+      }
     });
   }
 
@@ -60,23 +71,37 @@ class _ShoppingCartState extends State<ShoppingCart> {
   }
 
   double get subtotal {
+    
+
     double total = 0;
     for (var item in _items) {
       total += item.price * item.quantity;
     }
+    total = double.parse(total.toStringAsFixed(2));
+
     return total;
   }
 
   double get totalDiscount {
+     
+
     double discount = 0;
+
     for (var item in _items) {
-      discount += item.discount * item.quantity;
+      discount += (item.price * item.discount) * item.quantity;
     }
-    return discount;
+    double truncated = (discount * 100).truncateToDouble() / 100;
+
+    
+    return truncated;
   }
 
   double get totalAmount {
-    return subtotal + totalDiscount;
+     
+     var total = subtotal - totalDiscount;
+     total = double.parse(total.toStringAsFixed(2));
+
+    return subtotal - totalDiscount;
   }
 
   int get totalItems {
@@ -91,8 +116,9 @@ class _ShoppingCartState extends State<ShoppingCart> {
           spacing: 8,
           children: [
             ElevatedButton(
-              onPressed: () =>
-                  addItem('1', 'Apple iPhone', 999.99, discount: 0.1),
+              onPressed: () {
+                addItem('1', 'Apple iPhone', 999.99, discount: 0.1);
+              },
               child: const Text('Add iPhone'),
             ),
             ElevatedButton(
@@ -154,12 +180,15 @@ class _ShoppingCartState extends State<ShoppingCart> {
         _items.isEmpty
             ? const Center(child: Text('Cart is empty'))
             : ListView.builder(
-                physics: NeverScrollableScrollPhysics(),
+                physics: const NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
                 itemCount: _items.length,
                 itemBuilder: (context, index) {
                   final item = _items[index];
                   final itemTotal = item.price * item.quantity;
+                  final itemDiscount =
+                      (item.price * item.discount) * item.quantity;
+                  final itemTotalWithDiscount = itemTotal - itemDiscount;
 
                   return Card(
                     child: ListTile(
@@ -172,10 +201,12 @@ class _ShoppingCartState extends State<ShoppingCart> {
                           ),
                           if (item.discount > 0)
                             Text(
-                              'Discount: ${(item.discount * 100).toStringAsFixed(0)}%',
+                              'Discount: ${(item.discount * 100).toStringAsFixed(0)})',
                               style: const TextStyle(color: Colors.green),
                             ),
-                          Text('Item Total: \$${itemTotal.toStringAsFixed(2)}'),
+                          Text(
+                            'Item Total: \$${itemTotalWithDiscount.toStringAsFixed(2)}',
+                          ),
                         ],
                       ),
                       trailing: Row(
