@@ -26,11 +26,23 @@ class ShoppingCart extends StatefulWidget {
 class _ShoppingCartState extends State<ShoppingCart> {
   final List<CartItem> _items = [];
 
+  // ⭐️ FIX: Add public getter for testing ⭐️
+  List<CartItem> get items => _items;
+
+  // 🛠️ FIX 1: Increment quantity if item exists, otherwise add new item.
   void addItem(String id, String name, double price, {double discount = 0.0}) {
     setState(() {
-      _items.add(
-        CartItem(id: id, name: name, price: price, discount: discount),
-      );
+      final existingItemIndex = _items.indexWhere((item) => item.id == id);
+
+      if (existingItemIndex != -1) {
+        // Increment quantity for existing item
+        _items[existingItemIndex].quantity++;
+      } else {
+        // Add new item
+        _items.add(
+          CartItem(id: id, name: name, price: price, discount: discount),
+        );
+      }
     });
   }
 
@@ -62,21 +74,25 @@ class _ShoppingCartState extends State<ShoppingCart> {
   double get subtotal {
     double total = 0;
     for (var item in _items) {
+      // Calculates the base cost before discount
       total += item.price * item.quantity;
     }
     return total;
   }
 
+  // 🛠️ FIX 2: Calculate the total MONETARY discount.
   double get totalDiscount {
-    double discount = 0;
+    double discountAmount = 0;
     for (var item in _items) {
-      discount += item.discount * item.quantity;
+      // Monetary discount per item = (price * discount_percentage) * quantity
+      discountAmount += (item.price * item.discount) * item.quantity;
     }
-    return discount;
+    return discountAmount;
   }
 
+  // 🛠️ FIX 3: Total amount is Subtotal MINUS Total Discount.
   double get totalAmount {
-    return subtotal + totalDiscount;
+    return subtotal - totalDiscount;
   }
 
   int get totalItems {
@@ -112,7 +128,6 @@ class _ShoppingCartState extends State<ShoppingCart> {
           ],
         ),
         const SizedBox(height: 16),
-
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -137,7 +152,8 @@ class _ShoppingCartState extends State<ShoppingCart> {
               ),
               const SizedBox(height: 8),
               Text('Subtotal: \$${subtotal.toStringAsFixed(2)}'),
-              Text('Total Discount: \$${totalDiscount.toStringAsFixed(2)}'),
+              // Display discount as a negative number for clarity
+              Text('Total Discount: -\$${totalDiscount.toStringAsFixed(2)}'),
               const Divider(),
               Text(
                 'Total Amount: \$${totalAmount.toStringAsFixed(2)}',
@@ -150,7 +166,6 @@ class _ShoppingCartState extends State<ShoppingCart> {
           ),
         ),
         const SizedBox(height: 16),
-
         _items.isEmpty
             ? const Center(child: Text('Cart is empty'))
             : ListView.builder(
@@ -159,7 +174,9 @@ class _ShoppingCartState extends State<ShoppingCart> {
                 itemCount: _items.length,
                 itemBuilder: (context, index) {
                   final item = _items[index];
-                  final itemTotal = item.price * item.quantity;
+                  // Item total needs to be the discounted total for the line item
+                  final discountedPrice = item.price * (1 - item.discount);
+                  final itemTotal = discountedPrice * item.quantity;
 
                   return Card(
                     child: ListTile(
@@ -175,6 +192,7 @@ class _ShoppingCartState extends State<ShoppingCart> {
                               'Discount: ${(item.discount * 100).toStringAsFixed(0)}%',
                               style: const TextStyle(color: Colors.green),
                             ),
+                          // Display the final item total after discount
                           Text('Item Total: \$${itemTotal.toStringAsFixed(2)}'),
                         ],
                       ),
