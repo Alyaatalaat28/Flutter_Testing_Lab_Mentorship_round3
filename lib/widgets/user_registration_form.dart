@@ -17,27 +17,33 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
   bool _isLoading = false;
   String _message = '';
 
+  // FIX 1: Use a robust regular expression for email validation.
   bool isValidEmail(String email) {
-    return email.contains('@');
-  }
-
-  bool isValidPassword(String password) {
-    return true;
+    final emailRegExp = RegExp(r"^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
+    return emailRegExp.hasMatch(email);
   }
 
   Future<void> _submitForm() async {
-    setState(() {
-      _isLoading = true;
-      _message = '';
-    });
+    // FIX 2: Validate the form before proceeding.
+    // If validate() returns false, the submission is aborted.
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+        _message = '';
+      });
 
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
+      // Simulate API call
+      await Future.delayed(const Duration(seconds: 2));
 
-    setState(() {
-      _isLoading = false;
-      _message = 'Registration successful!';
-    });
+      setState(() {
+        _isLoading = false;
+        _message = 'Registration successful!';
+      });
+    } else {
+       setState(() {
+         _message = 'Please correct the errors in the form.';
+       });
+    }
   }
 
   @override
@@ -92,12 +98,19 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
                 helperText: 'At least 8 characters with numbers and symbols',
               ),
               obscureText: true,
+              // FIX 3: Implement strong password validation directly here.
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Please enter a password';
                 }
-                if (!isValidPassword(value)) {
-                  return 'Password is too weak';
+                if (value.length < 8) {
+                  return 'Password must be at least 8 characters long';
+                }
+                if (!value.contains(RegExp(r'[0-9]'))) {
+                  return 'Password must contain at least one number';
+                }
+                if (!value.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
+                  return 'Password must contain at least one special character';
                 }
                 return null;
               },
@@ -123,8 +136,17 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: _isLoading ? null : _submitForm,
+              style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16)),
               child: _isLoading
-                  ? const CircularProgressIndicator()
+                  ? const SizedBox(
+                      height: 24,
+                      width: 24,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 3,
+                      ),
+                    )
                   : const Text('Register'),
             ),
             if (_message.isNotEmpty)

@@ -20,17 +20,31 @@ class ShoppingCart extends StatefulWidget {
   const ShoppingCart({super.key});
 
   @override
-  State<ShoppingCart> createState() => _ShoppingCartState();
+  State<ShoppingCart> createState() => ShoppingCartState();
 }
 
-class _ShoppingCartState extends State<ShoppingCart> {
+class ShoppingCartState extends State<ShoppingCart> {
   final List<CartItem> _items = [];
 
+  // Used to expose the internal list for testing purposes
+  @visibleForTesting
+  List<CartItem> get items => _items;
+
+  // FIX: This method is now corrected to handle duplicate items
   void addItem(String id, String name, double price, {double discount = 0.0}) {
     setState(() {
-      _items.add(
-        CartItem(id: id, name: name, price: price, discount: discount),
-      );
+      // Check if the item already exists in the cart
+      final index = _items.indexWhere((item) => item.id == id);
+
+      if (index != -1) {
+        // If it exists, just increase the quantity
+        _items[index].quantity++;
+      } else {
+        // If it's a new item, add it to the list
+        _items.add(
+          CartItem(id: id, name: name, price: price, discount: discount),
+        );
+      }
     });
   }
 
@@ -70,13 +84,13 @@ class _ShoppingCartState extends State<ShoppingCart> {
   double get totalDiscount {
     double discount = 0;
     for (var item in _items) {
-      discount += item.discount * item.quantity;
+      discount += item.price * item.quantity * item.discount;
     }
     return discount;
   }
 
   double get totalAmount {
-    return subtotal + totalDiscount;
+    return subtotal - totalDiscount;
   }
 
   int get totalItems {
@@ -85,6 +99,7 @@ class _ShoppingCartState extends State<ShoppingCart> {
 
   @override
   Widget build(BuildContext context) {
+    // --- The build method remains unchanged ---
     return Column(
       children: [
         Wrap(
@@ -112,7 +127,6 @@ class _ShoppingCartState extends State<ShoppingCart> {
           ],
         ),
         const SizedBox(height: 16),
-
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -150,11 +164,10 @@ class _ShoppingCartState extends State<ShoppingCart> {
           ),
         ),
         const SizedBox(height: 16),
-
         _items.isEmpty
             ? const Center(child: Text('Cart is empty'))
             : ListView.builder(
-                physics: NeverScrollableScrollPhysics(),
+                physics: const NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
                 itemCount: _items.length,
                 itemBuilder: (context, index) {
@@ -167,9 +180,7 @@ class _ShoppingCartState extends State<ShoppingCart> {
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Price: \$${item.price.toStringAsFixed(2)} each',
-                          ),
+                          Text('Price: \$${item.price.toStringAsFixed(2)} each'),
                           if (item.discount > 0)
                             Text(
                               'Discount: ${(item.discount * 100).toStringAsFixed(0)}%',
