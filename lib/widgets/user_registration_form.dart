@@ -18,14 +18,39 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
   String _message = '';
 
   bool isValidEmail(String email) {
-    return email.contains('@');
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
+    return emailRegex.hasMatch(email);
   }
 
   bool isValidPassword(String password) {
+    if (password.length < 8) return false;
+    
+    // Must contain at least one number
+    if (!password.contains(RegExp(r'[0-9]'))) return false;
+    
+    // Must contain at least one special character
+    if (!password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) return false;
+    
+    // Must contain at least one uppercase letter
+    if (!password.contains(RegExp(r'[A-Z]'))) return false;
+    
+    // Must contain at least one lowercase letter
+    if (!password.contains(RegExp(r'[a-z]'))) return false;
+    
     return true;
   }
 
   Future<void> _submitForm() async {
+    // Validate form before submission
+    if (!_formKey.currentState!.validate()) {
+      setState(() {
+        _message = 'Please fix the errors above';
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _message = '';
@@ -89,7 +114,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
               decoration: const InputDecoration(
                 labelText: 'Password',
                 border: OutlineInputBorder(),
-                helperText: 'At least 8 characters with numbers and symbols',
+                helperText: 'At least 8 characters with uppercase, lowercase, numbers and symbols',
               ),
               obscureText: true,
               validator: (value) {
@@ -97,7 +122,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
                   return 'Please enter a password';
                 }
                 if (!isValidPassword(value)) {
-                  return 'Password is too weak';
+                  return 'Password must be at least 8 characters with uppercase, lowercase, numbers and symbols';
                 }
                 return null;
               },
