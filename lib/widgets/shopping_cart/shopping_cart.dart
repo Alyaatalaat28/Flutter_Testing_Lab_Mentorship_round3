@@ -59,7 +59,7 @@ class _ShoppingCartState extends State<ShoppingCart> {
     });
   }
 
-  double get subtotal {
+  double get totalCartPriceWithoutDiscount {
     double total = 0;
     for (var item in _items) {
       total += item.price * item.quantity;
@@ -67,16 +67,16 @@ class _ShoppingCartState extends State<ShoppingCart> {
     return total;
   }
 
-  double get totalDiscount {
+  double get totalCartDiscount {
     double discount = 0;
     for (var item in _items) {
-      discount += item.discount * item.quantity;
+      discount += (item.price * item.discount * item.quantity);
     }
     return discount;
   }
 
-  double get totalAmount {
-    return subtotal + totalDiscount;
+  double get totalCartPriceWithDis {
+    return totalCartPriceWithoutDiscount - totalCartDiscount;
   }
 
   int get totalItems {
@@ -87,32 +87,55 @@ class _ShoppingCartState extends State<ShoppingCart> {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        //=========================== btns ====================
         Wrap(
           spacing: 8,
+
           children: [
+            //====================== iPhone ====================
             ElevatedButton(
               onPressed: () =>
                   addItem('1', 'Apple iPhone', 999.99, discount: 0.1),
               child: const Text('Add iPhone'),
             ),
+
+            //===================== Galaxy =============
             ElevatedButton(
               onPressed: () =>
                   addItem('2', 'Samsung Galaxy', 899.99, discount: 0.15),
               child: const Text('Add Galaxy'),
             ),
+
+            //====================== Add ipad ==========
             ElevatedButton(
               onPressed: () => addItem('3', 'iPad Pro', 1099.99),
               child: const Text('Add iPad'),
             ),
+
+            //===================== Add again ===========
             ElevatedButton(
-              onPressed: () =>
-                  addItem('1', 'Apple iPhone', 999.99, discount: 0.1),
+              onPressed: () => updateQuantity( '1', 
+              
+                _items[ _items.indexWhere((item) => item.id == '1')].quantity +1
+              
+              
+              
+              
+              
+              
+              
+              
+              
+              
+              
+                ),
               child: const Text('Add iPhone Again'),
             ),
           ],
         ),
         const SizedBox(height: 16),
 
+        //========================= cart info ===============
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -136,11 +159,13 @@ class _ShoppingCartState extends State<ShoppingCart> {
                 ],
               ),
               const SizedBox(height: 8),
-              Text('Subtotal: \$${subtotal.toStringAsFixed(2)}'),
-              Text('Total Discount: \$${totalDiscount.toStringAsFixed(2)}'),
+              Text(
+                'Subtotal: \$${totalCartPriceWithoutDiscount.toStringAsFixed(2)}',
+              ),
+              Text('Total Discount: \$${totalCartDiscount.toStringAsFixed(2)}'),
               const Divider(),
               Text(
-                'Total Amount: \$${totalAmount.toStringAsFixed(2)}',
+                'Total Amount: \$${totalCartPriceWithDis.toStringAsFixed(2)}',
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
@@ -150,7 +175,7 @@ class _ShoppingCartState extends State<ShoppingCart> {
           ),
         ),
         const SizedBox(height: 16),
-
+        //========================== cart list ===============
         _items.isEmpty
             ? const Center(child: Text('Cart is empty'))
             : ListView.builder(
@@ -159,8 +184,11 @@ class _ShoppingCartState extends State<ShoppingCart> {
                 itemCount: _items.length,
                 itemBuilder: (context, index) {
                   final item = _items[index];
-                  final itemTotal = item.price * item.quantity;
-
+                  final calcDiscount =
+                      item.discount * item.price * item.quantity;
+                  final itemTotal =
+                      (item.price * item.quantity) - (calcDiscount);
+                  //===================== card item ===============
                   return Card(
                     child: ListTile(
                       title: Text(item.name),
