@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_testing_lab/shopping_cart/presentation/manager/cubit/registeration_cubit.dart';
-import 'package:flutter_testing_lab/shopping_cart/presentation/widgets/register_button_and_text_widget.dart';
-import 'package:flutter_testing_lab/shopping_cart/presentation/widgets/registration_field_section.dart';
+import 'package:flutter_testing_lab/registration/presentation/manager/cubit/registeration_cubit.dart';
+import 'package:flutter_testing_lab/registration/presentation/widgets/register_button_and_text_widget.dart';
+import 'package:flutter_testing_lab/registration/presentation/widgets/registration_field_section.dart';
 
 class UserRegistrationForm extends StatefulWidget {
   const UserRegistrationForm({super.key});

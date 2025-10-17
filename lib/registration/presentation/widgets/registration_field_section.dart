@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_testing_lab/shopping_cart/presentation/widgets/custom_text_form_field.dart';
+import 'package:flutter_testing_lab/registration/presentation/widgets/custom_text_form_field.dart';
 
 class RegistrationFieldSection extends StatelessWidget {
   const RegistrationFieldSection({

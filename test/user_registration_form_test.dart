@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_testing_lab/shopping_cart/presentation/manager/cubit/registeration_cubit.dart';
-import 'package:flutter_testing_lab/shopping_cart/presentation/widgets/user_registration_form.dart';
+import 'package:flutter_testing_lab/registration/presentation/manager/cubit/registeration_cubit.dart';
+import 'package:flutter_testing_lab/registration/presentation/widgets/user_registration_form.dart';
 
 void main() {
   testWidgets('form validation and register button test', (tester) async {

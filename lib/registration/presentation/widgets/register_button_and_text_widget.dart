@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_testing_lab/shopping_cart/presentation/manager/cubit/registeration_cubit.dart';
-import 'package:flutter_testing_lab/shopping_cart/presentation/widgets/final_text_widget.dart';
+import 'package:flutter_testing_lab/registration/presentation/manager/cubit/registeration_cubit.dart';
+import 'package:flutter_testing_lab/registration/presentation/widgets/final_text_widget.dart';
 
 class RegisterButtonAndTextWidget extends StatelessWidget {
   const RegisterButtonAndTextWidget({
