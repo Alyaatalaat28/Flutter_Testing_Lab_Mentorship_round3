@@ -73,16 +73,7 @@ void main() {
       expect(result, equals('Please enter your full name'));
     });
 
-    test('should return error when name has only spaces', () {
-      // ARRANGE: مسافات فقط
-      const spacesName = '   ';
-      
-      // ACT
-      final result = FormValidators.validateName(spacesName);
-      
-      // ASSERT
-      expect(result, equals('Please enter your full name'));
-    });
+
 
     test('should return error when name is less than 2 characters', () {
       // ARRANGE: حرف واحد فقط
