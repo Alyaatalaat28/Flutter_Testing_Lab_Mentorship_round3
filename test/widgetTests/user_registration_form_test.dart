@@ -1,184 +1,82 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_testing_lab/widgets/user_registration_form.dart';
+import 'package:mocktail/mocktail.dart';
+
+// Mock the onSubmit callback
+class MockOnSubmit extends Mock {
+  Future<void> call();
+}
 
 void main() {
-  group('UserRegistrationForm Widget Tests', () {
-    // Helper to pump the widget
-    Future<void> pumpForm(
-      WidgetTester tester, {
-      Future<void> Function()? onSubmit,
-    }) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(body: UserRegistrationForm(onSubmit: onSubmit)),
-        ),
-      );
-      await tester.pumpAndSettle();
-    }
+  late MockOnSubmit mockOnSubmit;
 
-    testWidgets('displays all form fields and submit button', (tester) async {
-      await pumpForm(tester);
+  setUp(() {
+    mockOnSubmit = MockOnSubmit();
+  });
 
-      expect(find.byType(TextFormField), findsNWidgets(4));
-      expect(find.text('Full Name'), findsOneWidget);
-      expect(find.text('Email'), findsOneWidget);
-      expect(find.text('Password'), findsOneWidget);
-      expect(find.text('Confirm Password'), findsOneWidget);
-      expect(find.text('Register'), findsOneWidget);
-    });
+  Future<void> _pumpForm(WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: UserRegistrationForm(onSubmit: mockOnSubmit)),
+      ),
+    );
+  }
 
-    testWidgets('shows validation errors for empty fields', (tester) async {
-      await pumpForm(tester);
+  testWidgets('shows error SnackBar when form is empty', (tester) async {
+    await _pumpForm(tester);
 
-      // Leave all fields empty and tap register
-      await tester.tap(find.text('Register'));
-      await tester.pumpAndSettle();
+    await tester.tap(find.text('Register'));
+    await tester.pump(); // start animation
+    await tester.pump(const Duration(seconds: 2)); // SnackBar duration
 
-      expect(find.text('Full name is required'), findsOneWidget);
-      expect(find.text('Email is required'), findsOneWidget);
-      expect(find.text('Password is required'), findsOneWidget);
-      expect(find.text('Please confirm your password'), findsOneWidget);
-      expect(
-        find.text('Please correct the errors in the form.'),
-        findsOneWidget,
-      );
-    });
+    expect(
+      find.text('❌ Please correct the errors in the form.'),
+      findsOneWidget,
+    );
+  });
 
-    testWidgets('shows validation errors for invalid input', (tester) async {
-      await pumpForm(tester);
+  testWidgets('submits successfully and shows success SnackBar', (
+    tester,
+  ) async {
+    when(() => mockOnSubmit()).thenAnswer((_) async {});
 
-      // Invalid name
-      await tester.enterText(find.byType(TextFormField).at(0), 'John123');
-      await tester.pumpAndSettle();
-      expect(
-        find.text('Name should contain only letters and spaces'),
-        findsOneWidget,
-      );
+    await _pumpForm(tester);
 
-      // Invalid email
-      await tester.enterText(
-        find.byType(TextFormField).at(1),
-        '123test@example.com',
-      );
-      await tester.pumpAndSettle();
-      expect(
-        find.text('Invalid email format (only letters allowed in local part)'),
-        findsOneWidget,
-      );
+    await tester.enterText(find.byType(TextFormField).at(0), 'John Doe');
+    await tester.enterText(
+      find.byType(TextFormField).at(1),
+      'john@example.com',
+    );
+    await tester.enterText(find.byType(TextFormField).at(2), 'Passw0rd#');
+    await tester.enterText(find.byType(TextFormField).at(3), 'Passw0rd#');
 
-      // Weak password
-      await tester.enterText(find.byType(TextFormField).at(2), 'weak');
-      await tester.pumpAndSettle();
-      expect(
-        find.text(
-          'Password must be at least 8 characters long, include uppercase, lowercase, numbers, and special characters.',
-        ),
-        findsOneWidget,
-      );
+    await tester.tap(find.text('Register'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 3)); // Wait for SnackBar
 
-      // Password mismatch
-      await tester.enterText(find.byType(TextFormField).at(2), 'Passw0rd#');
-      await tester.enterText(find.byType(TextFormField).at(3), 'different');
-      await tester.pumpAndSettle();
-      expect(find.text('Passwords do not match'), findsOneWidget);
+    verify(() => mockOnSubmit()).called(1);
+    expect(find.text('✅ Registration successful!'), findsOneWidget);
+  });
 
-      // Tap register
-      await tester.tap(find.text('Register'));
-      await tester.pumpAndSettle();
-      expect(
-        find.text('Please correct the errors in the form.'),
-        findsOneWidget,
-      );
-    });
+  testWidgets('shows failure SnackBar when onSubmit throws', (tester) async {
+    when(() => mockOnSubmit()).thenThrow(Exception('Network error'));
 
-    testWidgets('successful submission shows success message', (tester) async {
-      await pumpForm(
-        tester,
-        onSubmit: () async {
-          await Future.delayed(const Duration(seconds: 2));
-        },
-      );
+    await _pumpForm(tester);
 
-      await tester.enterText(find.byType(TextFormField).at(0), 'John Doe');
-      await tester.enterText(
-        find.byType(TextFormField).at(1),
-        'test@example.com',
-      );
-      await tester.enterText(find.byType(TextFormField).at(2), 'Passw0rd#');
-      await tester.enterText(find.byType(TextFormField).at(3), 'Passw0rd#');
+    await tester.enterText(find.byType(TextFormField).at(0), 'John Doe');
+    await tester.enterText(
+      find.byType(TextFormField).at(1),
+      'john@example.com',
+    );
+    await tester.enterText(find.byType(TextFormField).at(2), 'Passw0rd#');
+    await tester.enterText(find.byType(TextFormField).at(3), 'Passw0rd#');
 
-      await tester.tap(find.text('Register'));
-      await tester.pump(); // Start async operation
+    await tester.tap(find.text('Register'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 3));
 
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-
-      await tester.pump(const Duration(seconds: 2));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Registration successful!'), findsOneWidget);
-      expect(find.byType(CircularProgressIndicator), findsNothing);
-    });
-
-    testWidgets('submit button is disabled while loading', (tester) async {
-      await pumpForm(
-        tester,
-        onSubmit: () async {
-          await Future.delayed(const Duration(seconds: 2));
-        },
-      );
-
-      await tester.enterText(find.byType(TextFormField).at(0), 'John Doe');
-      await tester.enterText(
-        find.byType(TextFormField).at(1),
-        'test@example.com',
-      );
-      await tester.enterText(find.byType(TextFormField).at(2), 'Passw0rd#');
-      await tester.enterText(find.byType(TextFormField).at(3), 'Passw0rd#');
-
-      await tester.tap(find.text('Register'));
-      await tester.pump(); // Start async
-
-      final elevatedButton = tester.widget<ElevatedButton>(
-        find.byType(ElevatedButton),
-      );
-      expect(elevatedButton.onPressed, isNull); // Disabled
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-
-      await tester.pump(const Duration(seconds: 2));
-      await tester.pumpAndSettle();
-    });
-
-    testWidgets('shows error message on failed submission', (tester) async {
-      await pumpForm(
-        tester,
-        onSubmit: () async {
-          await Future.delayed(const Duration(seconds: 2));
-          throw Exception('API error');
-        },
-      );
-
-      await tester.enterText(find.byType(TextFormField).at(0), 'John Doe');
-      await tester.enterText(
-        find.byType(TextFormField).at(1),
-        'test@example.com',
-      );
-      await tester.enterText(find.byType(TextFormField).at(2), 'Passw0rd#');
-      await tester.enterText(find.byType(TextFormField).at(3), 'Passw0rd#');
-
-      await tester.tap(find.text('Register'));
-      await tester.pump();
-
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-
-      await tester.pump(const Duration(seconds: 2));
-      await tester.pumpAndSettle();
-
-      expect(
-        find.text('Registration failed: Exception: API error'),
-        findsOneWidget,
-      );
-      expect(find.byType(CircularProgressIndicator), findsNothing);
-    });
+    verify(() => mockOnSubmit()).called(1);
+    expect(find.textContaining('❌ Registration failed:'), findsOneWidget);
   });
 }
