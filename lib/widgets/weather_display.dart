@@ -1,4 +1,17 @@
+// weather_display_complete.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+// Test key constants for widget testing
+class WeatherDisplayKeys {
+  static const String loadingIndicator = 'loadingIndicator';
+  static const String errorMessage = 'errorMessage';
+  static const String weatherCard = 'weatherCard';
+  static const String temperatureText = 'temperatureText';
+  static const String refreshButton = 'refreshButton';
+  static const String cityDropdown = 'cityDropdown';
+  static const String temperatureSwitch = 'temperatureSwitch';
+}
 
 class WeatherDisplay extends StatefulWidget {
   const WeatherDisplay({super.key});
@@ -17,24 +30,24 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
   final List<String> _cities = ['New York', 'London', 'Tokyo', 'Invalid City'];
 
   double celsiusToFahrenheit(double celsius) {
-    return celsius * 9 / 5;
+    return (celsius * 9 / 5) + 32;
   }
 
   double fahrenheitToCelsius(double fahrenheit) {
-    return fahrenheit - 32 * 5 / 9;
+    return (fahrenheit - 32) * 5 / 9;
   }
 
   // Simulate API call that sometimes returns null or malformed data
   Future<Map<String, dynamic>?> _fetchWeatherData(String city) async {
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(milliseconds: 100)); // Faster for tests
 
     if (city == 'Invalid City') {
       return null;
     }
 
-    
+    // Simulate random API failure
     if (DateTime.now().millisecond % 4 == 0) {
-      return {'city': city, 'temperature': 22.5}; 
+      return {'city': city, 'temperature': 22.5}; // Incomplete data
     }
 
     return {
@@ -50,19 +63,47 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
   }
 
   Future<void> _loadWeather() async {
-    if (mounted) {
+    if (!mounted) return;
+    
+    setState(() {
+      _isLoading = true;
+      _error = null;
+      _weatherData = null;
+    });
+
+    try {
+      final data = await _fetchWeatherData(_selectedCity);
+      
+      if (!mounted) return;
+      
+      if (data == null) {
+        setState(() {
+          _error = 'Failed to load weather data for $_selectedCity';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final weatherData = WeatherData.tryParse(data);
+      if (weatherData == null) {
+        setState(() {
+          _error = 'Invalid weather data format';
+          _isLoading = false;
+        });
+        return;
+      }
+
       setState(() {
-        _isLoading = true;
-        _error = null;
+        _weatherData = weatherData;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'An error occurred: $e';
+        _isLoading = false;
       });
     }
-
-    
-    final data = await _fetchWeatherData(_selectedCity);
-    setState(() {
-      _weatherData = WeatherData.fromJson(data); 
-      _isLoading = false;
-    });
   }
 
   @override
@@ -85,12 +126,13 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
               const SizedBox(width: 8),
               Expanded(
                 child: DropdownButton<String>(
+                  key: const Key(WeatherDisplayKeys.cityDropdown),
                   value: _selectedCity,
                   isExpanded: true,
                   items: _cities.map((city) {
                     return DropdownMenuItem(value: city, child: Text(city));
                   }).toList(),
-                  onChanged: (value) {
+                  onChanged: _isLoading ? null : (value) {
                     if (value != null) {
                       setState(() {
                         _selectedCity = value;
@@ -102,8 +144,15 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
               ),
               const SizedBox(width: 8),
               ElevatedButton(
-                onPressed: _loadWeather,
-                child: const Text('Refresh'),
+                key: const Key(WeatherDisplayKeys.refreshButton),
+                onPressed: _isLoading ? null : _loadWeather,
+                child: _isLoading 
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Refresh'),
               ),
             ],
           ),
@@ -115,8 +164,9 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
               const Text('Temperature Unit:'),
               const SizedBox(width: 10),
               Switch(
+                key: const Key(WeatherDisplayKeys.temperatureSwitch),
                 value: _useFahrenheit,
-                onChanged: (value) {
+                onChanged: _isLoading ? null : (value) {
                   setState(() {
                     _useFahrenheit = value;
                   });
@@ -127,11 +177,49 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
           ),
           const SizedBox(height: 16),
 
-          if (_isLoading && _error == null)
-            const Center(child: CircularProgressIndicator())
+          // Loading state
+          if (_isLoading)
+            const Center(
+              key: Key(WeatherDisplayKeys.loadingIndicator),
+              child: Column(
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 8),
+                  Text('Loading weather data...'),
+                ],
+              ),
+            )
           
+          // Error state
+          else if (_error != null)
+            Card(
+              key: const Key(WeatherDisplayKeys.errorMessage),
+              color: Colors.red[50],
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                    const SizedBox(height: 8),
+                    Text(
+                      _error!,
+                      style: const TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: _loadWeather,
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          
+          // Weather data display
           else if (_weatherData != null)
             Card(
+              key: const Key(WeatherDisplayKeys.weatherCard),
               elevation: 4,
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -171,6 +259,7 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
                     const SizedBox(height: 16),
                     Center(
                       child: Text(
+                        key: const Key(WeatherDisplayKeys.temperatureText),
                         _useFahrenheit
                             ? '${celsiusToFahrenheit(_weatherData!.temperatureCelsius).toStringAsFixed(1)}°F'
                             : '${_weatherData!.temperatureCelsius.toStringAsFixed(1)}°C',
@@ -201,6 +290,16 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
               ),
             )
           
+          // Empty state (should not normally occur)
+          else
+            const Card(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(
+                  child: Text('No weather data available'),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -238,15 +337,60 @@ class WeatherData {
     required this.icon,
   });
 
-  
-  factory WeatherData.fromJson(Map<String, dynamic>? json) {
+  // Safe parsing with validation
+  static WeatherData? tryParse(Map<String, dynamic>? json) {
+    if (json == null) return null;
+    
+    try {
+      final city = json['city'] as String?;
+      final temperature = json['temperature'];
+      final description = json['description'] as String?;
+      final humidity = json['humidity'];
+      final windSpeed = json['windSpeed'];
+      final icon = json['icon'] as String?;
+
+      // Validate required fields
+      if (city == null || city.isEmpty) return null;
+      if (temperature == null) return null;
+      if (description == null || description.isEmpty) return null;
+      if (humidity == null) return null;
+      if (windSpeed == null) return null;
+      if (icon == null || icon.isEmpty) return null;
+
+      return WeatherData(
+        city: city,
+        temperatureCelsius: (temperature as num).toDouble(),
+        description: description,
+        humidity: (humidity as num).toInt(),
+        windSpeed: (windSpeed as num).toDouble(),
+        icon: icon,
+      );
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Original fromJson for backward compatibility (now with validation)
+  factory WeatherData.fromJson(Map<String, dynamic> json) {
     return WeatherData(
-      city: json!['city'],
-      temperatureCelsius: json['temperature'].toDouble(),
-      description: json['description'],
-      humidity: json['humidity'], 
-      windSpeed: json['windSpeed'].toDouble(), 
-      icon: json['icon'], 
+      city: json['city'] as String,
+      temperatureCelsius: (json['temperature'] as num).toDouble(),
+      description: json['description'] as String,
+      humidity: (json['humidity'] as num).toInt(),
+      windSpeed: (json['windSpeed'] as num).toDouble(),
+      icon: json['icon'] as String,
     );
   }
 }
+
+// Test helper class that can be accessed from tests
+class WeatherDisplayTestHelper {
+  static double celsiusToFahrenheit(double celsius) {
+    return (celsius * 9 / 5) + 32;
+  }
+
+  static double fahrenheitToCelsius(double fahrenheit) {
+    return (fahrenheit - 32) * 5 / 9;
+  }
+}
+
