@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_testing_lab/utils/validation_utils.dart';
 
 class UserRegistrationForm extends StatefulWidget {
   const UserRegistrationForm({super.key});
@@ -18,14 +19,18 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
   String _message = '';
 
   bool isValidEmail(String email) {
-    return email.contains('@');
+    return ValidationUtils.isValidEmail(email);
   }
 
   bool isValidPassword(String password) {
-    return true;
+    return ValidationUtils.isValidPassword(password);
   }
 
   Future<void> _submitForm() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _message = '';
@@ -50,6 +55,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextFormField(
+              key: const Key('nameField'),
               controller: _nameController,
               decoration: const InputDecoration(
                 labelText: 'Full Name',
@@ -67,6 +73,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
             ),
             const SizedBox(height: 16),
             TextFormField(
+              key: const Key('emailField'),
               controller: _emailController,
               decoration: const InputDecoration(
                 labelText: 'Email',
@@ -85,6 +92,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
             ),
             const SizedBox(height: 16),
             TextFormField(
+              key: Key('passwordField'),
               controller: _passwordController,
               decoration: const InputDecoration(
                 labelText: 'Password',
@@ -104,6 +112,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
             ),
             const SizedBox(height: 16),
             TextFormField(
+              key: const Key('confirmPasswordField'),
               controller: _confirmPasswordController,
               decoration: const InputDecoration(
                 labelText: 'Confirm Password',
@@ -122,6 +131,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
+              key: const Key('registerButton'),
               onPressed: _isLoading ? null : _submitForm,
               child: _isLoading
                   ? const CircularProgressIndicator()
