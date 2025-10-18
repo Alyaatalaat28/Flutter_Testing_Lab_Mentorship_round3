@@ -26,11 +26,25 @@ class ShoppingCart extends StatefulWidget {
 class _ShoppingCartState extends State<ShoppingCart> {
   final List<CartItem> _items = [];
 
+  // ISSUE RESOLVED: Adding duplicate items created new entries instead of updating quantity
+  // This caused the cart to show multiple separate entries for the same product
+  // FIX: Check if item with same ID already exists before adding
+  // WHY: In real shopping carts, adding the same item should increase quantity, not duplicate entries
+  // This provides better UX and matches user expectations
   void addItem(String id, String name, double price, {double discount = 0.0}) {
     setState(() {
-      _items.add(
-        CartItem(id: id, name: name, price: price, discount: discount),
-      );
+      // Check if item with this ID already exists in cart
+      final existingItemIndex = _items.indexWhere((item) => item.id == id);
+
+      if (existingItemIndex != -1) {
+        // Item exists: increment quantity instead of adding new entry
+        _items[existingItemIndex].quantity += 1;
+      } else {
+        // Item doesn't exist: add new item to cart
+        _items.add(
+          CartItem(id: id, name: name, price: price, discount: discount),
+        );
+      }
     });
   }
 
@@ -67,16 +81,27 @@ class _ShoppingCartState extends State<ShoppingCart> {
     return total;
   }
 
+  // ISSUE RESOLVED: Discount calculation didn't multiply by item price
+  // This treated discount as an absolute value instead of a percentage
+  // FIX: Calculate discount as: price * discount_percentage * quantity
+  // WHY: Discount field represents a percentage (0.0 to 1.0), not absolute amount
+  // Example: $100 item with 0.1 (10%) discount and qty 2 = $100 * 0.1 * 2 = $20 discount
   double get totalDiscount {
     double discount = 0;
     for (var item in _items) {
-      discount += item.discount * item.quantity;
+      // Multiply item price by discount percentage and quantity
+      discount += item.price * item.discount * item.quantity;
     }
     return discount;
   }
 
+  // ISSUE RESOLVED: Total amount ADDED discount instead of SUBTRACTING it
+  // This made the total higher than subtotal, which is incorrect
+  // FIX: Subtract totalDiscount from subtotal
+  // WHY: Discounts should reduce the final price, not increase it
+  // Example: Subtotal $100 with $10 discount = $90 total (not $110)
   double get totalAmount {
-    return subtotal + totalDiscount;
+    return subtotal - totalDiscount;
   }
 
   int get totalItems {
@@ -154,7 +179,11 @@ class _ShoppingCartState extends State<ShoppingCart> {
         _items.isEmpty
             ? const Center(child: Text('Cart is empty'))
             : ListView.builder(
-                physics: NeverScrollableScrollPhysics(),
+                // ISSUE RESOLVED: NeverScrollableScrollPhysics created without const
+                // FIX: Add const keyword to physics property
+                // WHY: Using const reduces unnecessary object creation on each build
+                // This improves performance and follows Flutter best practices
+                physics: const NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
                 itemCount: _items.length,
                 itemBuilder: (context, index) {
