@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_testing_lab/extension/extension.dart';
 
 class UserRegistrationForm extends StatefulWidget {
   const UserRegistrationForm({super.key});
@@ -17,27 +18,21 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
   bool _isLoading = false;
   String _message = '';
 
-  bool isValidEmail(String email) {
-    return email.contains('@');
-  }
-
-  bool isValidPassword(String password) {
-    return true;
-  }
-
   Future<void> _submitForm() async {
-    setState(() {
-      _isLoading = true;
-      _message = '';
-    });
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+        _message = '';
+      });
 
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
+      // Simulate API call
+      await Future.delayed(const Duration(seconds: 2));
 
-    setState(() {
-      _isLoading = false;
-      _message = 'Registration successful!';
-    });
+      setState(() {
+        _isLoading = false;
+        _message = 'Registration successful!';
+      });
+    }
   }
 
   @override
@@ -49,6 +44,7 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            /// Full Name
             TextFormField(
               controller: _nameController,
               decoration: const InputDecoration(
@@ -65,7 +61,10 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
                 return null;
               },
             ),
+
             const SizedBox(height: 16),
+
+            /// Email
             TextFormField(
               controller: _emailController,
               decoration: const InputDecoration(
@@ -77,13 +76,16 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
                 if (value == null || value.isEmpty) {
                   return 'Please enter your email';
                 }
-                if (!isValidEmail(value)) {
+                if (!value.isValidEmail) {
                   return 'Please enter a valid email';
                 }
                 return null;
               },
             ),
+
             const SizedBox(height: 16),
+
+            /// Password
             TextFormField(
               controller: _passwordController,
               decoration: const InputDecoration(
@@ -96,13 +98,16 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
                 if (value == null || value.isEmpty) {
                   return 'Please enter a password';
                 }
-                if (!isValidPassword(value)) {
+                if (!value.isValidPassword) {
                   return 'Password is too weak';
                 }
                 return null;
               },
             ),
+
             const SizedBox(height: 16),
+
+            /// Confirm Password
             TextFormField(
               controller: _confirmPasswordController,
               decoration: const InputDecoration(
@@ -120,13 +125,18 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
                 return null;
               },
             ),
+
             const SizedBox(height: 24),
+
+            /// Register Button
             ElevatedButton(
               onPressed: _isLoading ? null : _submitForm,
               child: _isLoading
                   ? const CircularProgressIndicator()
                   : const Text('Register'),
             ),
+
+            /// Message
             if (_message.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 16),
