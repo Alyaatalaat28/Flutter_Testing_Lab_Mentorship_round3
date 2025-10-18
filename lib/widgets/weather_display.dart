@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
+typedef WeatherFetcher = Future<Map<String, dynamic>?> Function(String city);
+
 class WeatherDisplay extends StatefulWidget {
-  const WeatherDisplay({super.key});
+  final WeatherFetcher? fetcher;
+  const WeatherDisplay({super.key, this.fetcher});
 
   @override
   State<WeatherDisplay> createState() => _WeatherDisplayState();
@@ -17,24 +20,24 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
   final List<String> _cities = ['New York', 'London', 'Tokyo', 'Invalid City'];
 
   double celsiusToFahrenheit(double celsius) {
-    return celsius * 9 / 5;
+    return celsius * 9 / 5 + 32;
   }
 
   double fahrenheitToCelsius(double fahrenheit) {
-    return fahrenheit - 32 * 5 / 9;
+    return (fahrenheit - 32) * 5 / 9;
   }
 
   // Simulate API call that sometimes returns null or malformed data
-  Future<Map<String, dynamic>?> _fetchWeatherData(String city) async {
+  Future<Map<String, dynamic>?> _defaultFetch(String city) async {
     await Future.delayed(const Duration(seconds: 2));
 
     if (city == 'Invalid City') {
       return null;
     }
 
-    
     if (DateTime.now().millisecond % 4 == 0) {
-      return {'city': city, 'temperature': 22.5}; 
+      // return minimal data sometimes
+      return {'city': city, 'temperature': 22.5};
     }
 
     return {
@@ -50,19 +53,50 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
   }
 
   Future<void> _loadWeather() async {
-    if (mounted) {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    final fetcher = widget.fetcher ?? _defaultFetch;
+
+    try {
+      final data = await fetcher(_selectedCity);
+      if (!mounted) return;
+
+      if (data == null) {
+        // API returned null
+        setState(() {
+          _weatherData = null;
+          _error = 'No data available for "$_selectedCity".';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      try {
+        final parsed = WeatherData.fromJson(data);
+        setState(() {
+          _weatherData = parsed;
+          _isLoading = false;
+          _error = null;
+        });
+      } catch (e) {
+        // malformed data
+        setState(() {
+          _weatherData = null;
+          _error = 'Malformed data received.';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
       setState(() {
-        _isLoading = true;
-        _error = null;
+        _weatherData = null;
+        _error = 'Failed to fetch weather: ${e.toString()}';
+        _isLoading = false;
       });
     }
-
-    
-    final data = await _fetchWeatherData(_selectedCity);
-    setState(() {
-      _weatherData = WeatherData.fromJson(data); 
-      _isLoading = false;
-    });
   }
 
   @override
@@ -115,6 +149,7 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
               const Text('Temperature Unit:'),
               const SizedBox(width: 10),
               Switch(
+                key: const Key('unitSwitch'),
                 value: _useFahrenheit,
                 onChanged: (value) {
                   setState(() {
@@ -128,10 +163,10 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
           const SizedBox(height: 16),
 
           if (_isLoading && _error == null)
-            const Center(child: CircularProgressIndicator())
-          
+            const Center(child: CircularProgressIndicator(key: Key('loading')))
           else if (_weatherData != null)
             Card(
+              key: const Key('weatherCard'),
               elevation: 4,
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -171,6 +206,7 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
                     const SizedBox(height: 16),
                     Center(
                       child: Text(
+                        key: const Key('temperatureText'),
                         _useFahrenheit
                             ? '${celsiusToFahrenheit(_weatherData!.temperatureCelsius).toStringAsFixed(1)}°F'
                             : '${_weatherData!.temperatureCelsius.toStringAsFixed(1)}°C',
@@ -199,8 +235,7 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
                   ],
                 ),
               ),
-            )
-          
+            ),
         ],
       ),
     );
@@ -238,15 +273,39 @@ class WeatherData {
     required this.icon,
   });
 
-  
   factory WeatherData.fromJson(Map<String, dynamic>? json) {
+    if (json == null) throw FormatException('Null JSON');
+    final city = json['city'];
+    final temp = json['temperature'];
+    final desc = json['description'];
+    final humidity = json['humidity'];
+    final windSpeed = json['windSpeed'];
+    final icon = json['icon'];
+
+    if (city == null || temp == null) {
+      throw FormatException('Missing required weather fields');
+    }
+
+    double tempDouble;
+    try {
+      tempDouble = (temp is num)
+          ? temp.toDouble()
+          : double.parse(temp.toString());
+    } catch (e) {
+      throw FormatException('Invalid temperature format');
+    }
+
     return WeatherData(
-      city: json!['city'],
-      temperatureCelsius: json['temperature'].toDouble(),
-      description: json['description'],
-      humidity: json['humidity'], 
-      windSpeed: json['windSpeed'].toDouble(), 
-      icon: json['icon'], 
+      city: city.toString(),
+      temperatureCelsius: tempDouble,
+      description: desc?.toString() ?? 'No description',
+      humidity: (humidity is int)
+          ? humidity
+          : int.tryParse(humidity?.toString() ?? '') ?? 0,
+      windSpeed: (windSpeed is num)
+          ? windSpeed.toDouble()
+          : double.tryParse(windSpeed?.toString() ?? '') ?? 0.0,
+      icon: icon?.toString() ?? '?',
     );
   }
 }
