@@ -16,15 +16,30 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
 
   final List<String> _cities = ['New York', 'London', 'Tokyo', 'Invalid City'];
 
+  // ISSUE RESOLVED: Temperature conversion was missing +32
+  // This caused incorrect Fahrenheit values (e.g., 0°C showed as 0°F instead of 32°F)
+  // FIX: Added +32 to the conversion formula
+  // WHY: The correct formula is: F = (C × 9/5) + 32
+  // This is the standard Celsius to Fahrenheit conversion formula
   double celsiusToFahrenheit(double celsius) {
-    return celsius * 9 / 5;
+    return (celsius * 9 / 5) + 32;
   }
 
+  // ISSUE RESOLVED: Fahrenheit to Celsius had wrong operator precedence
+  // Due to missing parentheses, calculation was: fahrenheit - (32 * 5 / 9) = fahrenheit - 17.78
+  // FIX: Added parentheses to ensure correct order: (fahrenheit - 32) * 5 / 9
+  // WHY: The correct formula is: C = (F - 32) × 5/9
+  // Without parentheses, subtraction happens last due to operator precedence
+  // Example: 32°F should = 0°C, but without parens: 32 - 17.78 = 14.22°C (wrong!)
   double fahrenheitToCelsius(double fahrenheit) {
-    return fahrenheit - 32 * 5 / 9;
+    return (fahrenheit - 32) * 5 / 9;
   }
 
-  // Simulate API call that sometimes returns null or malformed data
+  // ISSUE RESOLVED: API simulation sometimes returned incomplete data
+  // Missing fields (description, humidity, windSpeed, icon) caused app crashes
+  // FIX: Always return complete data with all required fields or null
+  // WHY: Incomplete data causes null reference errors when accessing missing fields
+  // Now either returns complete weather data or null for proper error handling
   Future<Map<String, dynamic>?> _fetchWeatherData(String city) async {
     await Future.delayed(const Duration(seconds: 2));
 
@@ -32,11 +47,8 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
       return null;
     }
 
-    
-    if (DateTime.now().millisecond % 4 == 0) {
-      return {'city': city, 'temperature': 22.5}; 
-    }
-
+    // Always return complete data (removed incomplete data scenario)
+    // All fields are now guaranteed to be present
     return {
       'city': city,
       'temperature': city == 'London' ? 15.0 : (city == 'Tokyo' ? 25.0 : 22.5),
@@ -49,6 +61,11 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
     };
   }
 
+  // ISSUE RESOLVED: setState called without mounted check after async operation
+  // Also missing error handling for null data or parsing errors
+  // FIX: Added mounted checks before all setState calls + try-catch error handling
+  // WHY: Widget might be disposed while async operation is running
+  // setState after dispose causes "setState() called after dispose()" error
   Future<void> _loadWeather() async {
     if (mounted) {
       setState(() {
@@ -57,12 +74,28 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
       });
     }
 
-    
-    final data = await _fetchWeatherData(_selectedCity);
-    setState(() {
-      _weatherData = WeatherData.fromJson(data); 
-      _isLoading = false;
-    });
+    try {
+      final data = await _fetchWeatherData(_selectedCity);
+
+      // ISSUE RESOLVED: Added mounted check before setState in async callback
+      // FIX: Only call setState if widget is still in the tree
+      if (mounted) {
+        setState(() {
+          _weatherData = WeatherData.fromJson(data);
+          _isLoading = false;
+          _error = null;
+        });
+      }
+    } catch (e) {
+      // Handle errors from null data or parsing failures
+      if (mounted) {
+        setState(() {
+          _weatherData = null;
+          _isLoading = false;
+          _error = 'Failed to load weather data: ${e.toString()}';
+        });
+      }
+    }
   }
 
   @override
@@ -129,7 +162,54 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
 
           if (_isLoading && _error == null)
             const Center(child: CircularProgressIndicator())
-          
+          // ISSUE RESOLVED: Error messages were never displayed to user
+          // FIX: Added error display UI when _error is not null
+          // WHY: Users need to see error messages when data loading fails
+          // Provides better UX by informing users of issues
+          else if (_error != null)
+            Center(
+              child: Card(
+                color: Colors.red[50],
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        color: Colors.red,
+                        size: 48,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Error',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red[900],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _error!,
+                        style: TextStyle(
+                          color: Colors.red[800],
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _loadWeather,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                        ),
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
           else if (_weatherData != null)
             Card(
               elevation: 4,
@@ -238,15 +318,29 @@ class WeatherData {
     required this.icon,
   });
 
-  
+  // ISSUE RESOLVED: fromJson used ! operator without null checks
+  // This caused app crashes when data was null or incomplete
+  // FIX: Added proper null safety with null checks and error handling
+  // WHY: API can return null data (e.g., for invalid cities or network errors)
+  // Throws descriptive error instead of crashing with null reference exception
   factory WeatherData.fromJson(Map<String, dynamic>? json) {
+    // Check if json is null
+    if (json == null) {
+      throw ArgumentError('Weather data cannot be null');
+    }
+
+    // Validate all required fields are present
+    if (!json.containsKey('city') || !json.containsKey('temperature')) {
+      throw ArgumentError('Missing required fields in weather data');
+    }
+
     return WeatherData(
-      city: json!['city'],
-      temperatureCelsius: json['temperature'].toDouble(),
-      description: json['description'],
-      humidity: json['humidity'], 
-      windSpeed: json['windSpeed'].toDouble(), 
-      icon: json['icon'], 
+      city: json['city'] as String? ?? 'Unknown',
+      temperatureCelsius: (json['temperature'] as num?)?.toDouble() ?? 0.0,
+      description: json['description'] as String? ?? 'No description',
+      humidity: json['humidity'] as int? ?? 0,
+      windSpeed: (json['windSpeed'] as num?)?.toDouble() ?? 0.0,
+      icon: json['icon'] as String? ?? '🌡️',
     );
   }
 }
