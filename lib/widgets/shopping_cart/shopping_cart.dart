@@ -114,21 +114,12 @@ class _ShoppingCartState extends State<ShoppingCart> {
 
             //===================== Add again ===========
             ElevatedButton(
-              onPressed: () => updateQuantity( '1', 
-              
-                _items[ _items.indexWhere((item) => item.id == '1')].quantity +1
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-              
-                ),
+              onPressed: () => updateQuantity(
+                '1',
+
+                _items[_items.indexWhere((item) => item.id == '1')].quantity +
+                    1,
+              ),
               child: const Text('Add iPhone Again'),
             ),
           ],
