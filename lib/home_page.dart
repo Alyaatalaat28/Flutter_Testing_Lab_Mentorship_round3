@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_testing_lab/widgets/registration_form/user_registration_form.dart';
 import 'package:flutter_testing_lab/widgets/shopping_cart/shopping_cart.dart';
-import 'package:flutter_testing_lab/widgets/weather_display.dart';
+import 'package:flutter_testing_lab/widgets/weater_display/weather_display.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
