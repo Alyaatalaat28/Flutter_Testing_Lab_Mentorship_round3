@@ -17,15 +17,65 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
   bool _isLoading = false;
   String _message = '';
 
+  // ISSUE RESOLVED: Email validation only checked for '@' character
+  // This accepted invalid emails like "@", "a@", "@b.com", "test@", etc.
+  // FIX: Implement proper email validation using regex pattern
+  // WHY: Regex ensures proper email structure (username@domain.extension)
+  // Pattern validates:
+  // - At least one alphanumeric/special char before @
+  // - At least one alphanumeric/special char for domain name
+  // - A dot (.) followed by at least 2 letters for top-level domain (TLD)
   bool isValidEmail(String email) {
-    return email.contains('@');
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
+    return emailRegex.hasMatch(email);
   }
 
+  // ISSUE RESOLVED: Password validation always returned true
+  // This accepted any password including empty, "a", "123", etc.
+  // FIX: Implement strong password validation with multiple security checks
+  // WHY: Strong passwords protect user accounts from unauthorized access
+  // Requirements enforced:
+  // - Minimum 8 characters length (industry standard)
+  // - At least one number (0-9) for complexity
+  // - At least one special character (!@#$%^&*(),.?":{}|<>) for added security
+  // - At least one letter (a-z, A-Z) for variety
   bool isValidPassword(String password) {
-    return true;
+    if (password.length < 8) {
+      return false; // Too short
+    }
+
+    // Check for at least one number
+    if (!RegExp(r'[0-9]').hasMatch(password)) {
+      return false;
+    }
+
+    // Check for at least one special character
+    if (!RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password)) {
+      return false;
+    }
+
+    // Check for at least one letter (uppercase or lowercase)
+    if (!RegExp(r'[a-zA-Z]').hasMatch(password)) {
+      return false;
+    }
+
+    return true; // All requirements met
   }
 
+  // ISSUE RESOLVED: Form submitted without validation
+  // This allowed invalid data to be submitted (empty fields, invalid email, weak password)
+  // FIX: Add form validation check before processing submission
+  // WHY: Form validation prevents invalid data from being sent to the backend
+  // This provides immediate user feedback and reduces server load
   Future<void> _submitForm() async {
+    // Validate all form fields before submission
+    if (!_formKey.currentState!.validate()) {
+      // If validation fails, don't proceed with submission
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _message = '';
@@ -34,10 +84,24 @@ class _UserRegistrationFormState extends State<UserRegistrationForm> {
     // Simulate API call
     await Future.delayed(const Duration(seconds: 2));
 
-    setState(() {
-      _isLoading = false;
-      _message = 'Registration successful!';
-    });
+    // ISSUE RESOLVED: No error handling for failed submissions
+    // FIX: Added try-catch block for error handling (currently simulating success)
+    // WHY: Real API calls can fail due to network issues, server errors, etc.
+    // In production, this would handle actual API errors
+    try {
+      // In production, this would be an actual API call
+      // For now, we simulate success
+      setState(() {
+        _isLoading = false;
+        _message = 'Registration successful!';
+      });
+    } catch (e) {
+      // Handle registration errors
+      setState(() {
+        _isLoading = false;
+        _message = 'Registration failed. Please try again.';
+      });
+    }
   }
 
   @override
