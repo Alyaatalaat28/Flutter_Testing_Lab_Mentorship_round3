@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_testing_lab/widgets/weater_display/widgets/build_weather_detail.dart';
+import 'package:flutter_testing_lab/widgets/weater_display/widgets/weather_data.dart';
 
 class WeatherDisplay extends StatefulWidget {
   const WeatherDisplay({super.key});
@@ -16,27 +18,36 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
 
   final List<String> _cities = ['New York', 'London', 'Tokyo', 'Invalid City'];
 
+  // ==================== إصلاح 1: تصحيح معادلة التحويل من سيلسيوس لفهرنهايت ====================
+  // المعادلة الصحيحة: F = (C × 9/5) + 32
+  // كانت ناقصة الـ +32
   double celsiusToFahrenheit(double celsius) {
-    return celsius * 9 / 5;
+    return (celsius * 9 / 5) + 32; // أضفنا +32
   }
 
+  // ==================== إصلاح 2: تصحيح معادلة التحويل من فهرنهايت لسيلسيوس ====================
+  // المعادلة الصحيحة: C = (F - 32) × 5/9
+  // كانت المعادلة غلط تماماً (F - 32 * 5 / 9)
   double fahrenheitToCelsius(double fahrenheit) {
-    return fahrenheit - 32 * 5 / 9;
+    return (fahrenheit - 32) * 5 / 9; // صححنا الأقواس
   }
 
-  // Simulate API call that sometimes returns null or malformed data
+  // ==================== محاكاة API Call ====================
+  // دي بترجع null أو data ناقصة في بعض الحالات
   Future<Map<String, dynamic>?> _fetchWeatherData(String city) async {
     await Future.delayed(const Duration(seconds: 2));
 
+    // لو المدينة Invalid، نرجع null
     if (city == 'Invalid City') {
       return null;
     }
 
-    
+    // في بعض الأحيان نرجع data ناقصة (مفيش description, humidity, etc)
     if (DateTime.now().millisecond % 4 == 0) {
-      return {'city': city, 'temperature': 22.5}; 
+      return {'city': city, 'temperature': 22.5};
     }
 
+    // Data كاملة
     return {
       'city': city,
       'temperature': city == 'London' ? 15.0 : (city == 'Tokyo' ? 25.0 : 22.5),
@@ -49,20 +60,51 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
     };
   }
 
+  // ==================== إصلاح 3: تحسين إدارة الـ Loading State والـ Error Handling ====================
   Future<void> _loadWeather() async {
-    if (mounted) {
+    // نتأكد إن الـ widget لسه موجود قبل ما نعمل setState
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = true; // نبدأ التحميل
+      _error = null; // نمسح أي أخطاء قديمة
+    });
+
+    try {
+      // نجيب الـ data من الـ API
+      final data = await _fetchWeatherData(_selectedCity);
+
+      // نتأكد إن الـ widget لسه موجود بعد الانتظار
+      if (!mounted) return;
+
       setState(() {
-        _isLoading = true;
-        _error = null;
+        // لو الـ data null (مثلاً Invalid City)
+        if (data == null) {
+          _error = 'Failed to load weather data. City not found.';
+          _weatherData = null;
+        } else {
+          // نحاول نعمل parse للـ data
+          try {
+            _weatherData = WeatherData.fromJson(data);
+            _error = null; // نمسح الـ error لو نجحت العملية
+          } catch (e) {
+            // لو حصل error في الـ parsing (data ناقصة مثلاً)
+            _error = 'Invalid weather data format: ${e.toString()}';
+            _weatherData = null;
+          }
+        }
+        _isLoading = false; // ننهي التحميل
+      });
+    } catch (e) {
+      // لو حصل أي error تاني (network error مثلاً)
+      if (!mounted) return;
+
+      setState(() {
+        _error = 'An error occurred: ${e.toString()}';
+        _weatherData = null;
+        _isLoading = false; // ننهي التحميل حتى لو حصل error
       });
     }
-
-    
-    final data = await _fetchWeatherData(_selectedCity);
-    setState(() {
-      _weatherData = WeatherData.fromJson(data); 
-      _isLoading = false;
-    });
   }
 
   @override
@@ -78,7 +120,7 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // City selection
+          // ==================== City Selection ====================
           Row(
             children: [
               const Text('City: '),
@@ -109,7 +151,7 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
           ),
           const SizedBox(height: 16),
 
-          // Temperature unit toggle
+          // ==================== Temperature Unit Toggle ====================
           Row(
             children: [
               const Text('Temperature Unit:'),
@@ -127,9 +169,47 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
           ),
           const SizedBox(height: 16),
 
+          // ==================== إصلاح 4: إضافة عرض للـ Error State ====================
+          // لو في loading ومفيش error، نعرض الـ loading indicator
           if (_isLoading && _error == null)
-            const Center(child: CircularProgressIndicator())
-          
+            const Center(
+              child: Column(
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 8),
+                  Text('Loading weather data...'),
+                ],
+              ),
+            )
+          // لو في error، نعرضه
+          else if (_error != null)
+            Card(
+              color: Colors.red[50],
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      color: Colors.red,
+                      size: 48,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _error!,
+                      style: const TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: _loadWeather,
+                      child: const Text('Try Again'),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          // لو في data، نعرضها
           else if (_weatherData != null)
             Card(
               elevation: 4,
@@ -184,12 +264,12 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        _buildWeatherDetail(
+                        buildWeatherDetail(
                           'Humidity',
                           '${_weatherData!.humidity}%',
                           Icons.water_drop,
                         ),
-                        _buildWeatherDetail(
+                        buildWeatherDetail(
                           'Wind Speed',
                           '${_weatherData!.windSpeed} km/h',
                           Icons.air,
@@ -199,54 +279,9 @@ class _WeatherDisplayState extends State<WeatherDisplay> {
                   ],
                 ),
               ),
-            )
-          
+            ),
         ],
       ),
-    );
-  }
-
-  Widget _buildWeatherDetail(String label, String value, IconData icon) {
-    return Column(
-      children: [
-        Icon(icon, color: Colors.blue, size: 32),
-        const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-        Text(
-          value,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-      ],
-    );
-  }
-}
-
-class WeatherData {
-  final String city;
-  final double temperatureCelsius;
-  final String description;
-  final int humidity;
-  final double windSpeed;
-  final String icon;
-
-  WeatherData({
-    required this.city,
-    required this.temperatureCelsius,
-    required this.description,
-    required this.humidity,
-    required this.windSpeed,
-    required this.icon,
-  });
-
-  
-  factory WeatherData.fromJson(Map<String, dynamic>? json) {
-    return WeatherData(
-      city: json!['city'],
-      temperatureCelsius: json['temperature'].toDouble(),
-      description: json['description'],
-      humidity: json['humidity'], 
-      windSpeed: json['windSpeed'].toDouble(), 
-      icon: json['icon'], 
     );
   }
 }
